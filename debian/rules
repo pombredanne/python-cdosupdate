@@ -46,11 +46,11 @@ install: build
 	dh_clean -k 
 	dh_installdirs
 
-	# Add here commands to install the package into debian/mintupdate.
-	#$(MAKE) install DESTDIR=$(CURDIR)/debian/mintupdate
-	mkdir -p $(CURDIR)/debian/mintupdate
-	cp -r $(CURDIR)/usr $(CURDIR)/debian/mintupdate/
-	cp -r $(CURDIR)/etc $(CURDIR)/debian/mintupdate/
+	# Add here commands to install the package into debian/cosupdate.
+	#$(MAKE) install DESTDIR=$(CURDIR)/debian/cosupdate
+	mkdir -p $(CURDIR)/debian/cosupdate
+	cp -r $(CURDIR)/usr $(CURDIR)/debian/cosupdate/
+	cp -r $(CURDIR)/etc $(CURDIR)/debian/cosupdate/
 
 # Build architecture-independent files here.
 binary-indep: build install
