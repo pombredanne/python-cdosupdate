@@ -1,7 +1,7 @@
 Source: cosupdate
 Section: admin
 Priority: optional
-Maintainer: Wu Xifei <xifei@nfs.iscas.ac.cn>
+Maintainer: ISCAS <cos_ibp@iscas.ac.cn>
 Build-Depends: debhelper (>= 5)
 Standards-Version: 0.5.0
 
