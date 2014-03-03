@@ -315,7 +315,7 @@ class InstallThread(threading.Thread):
                     cmd = ["sudo", "/usr/sbin/synaptic", "--hide-main-window",  \
                             "--non-interactive", "--parent-window-id", "%s" % self.wTree.get_widget("window1").window.xid]
                     cmd.append("-o")
-                    cmd.append("Synaptic::closeZvt=true")
+                    cmd.append("Synaptic::closeZvt=false")
                     cmd.append("--progress-str")
                     cmd.append("\"" + _("Please wait, this can take some time") + "\"")
                     cmd.append("--finish-str")
@@ -1491,7 +1491,8 @@ try:
     statusIcon = gtk.StatusIcon()
     statusIcon.set_from_file(icon_busy)
     statusIcon.set_tooltip(_("Checking for updates"))
-    statusIcon.set_visible(True)    
+    statusIcon.set_visible(True)
+    tooltips = gtk.Tooltips()
 
     #Set the Glade file
     gladefile = "/usr/lib/linuxmint/mintUpdate/mintUpdate.glade"
@@ -1565,10 +1566,11 @@ try:
     selection.connect("changed", display_selected_package, wTree)
     wTree.get_widget("notebook_details").connect("switch-page", switch_page, wTree, treeview_update)
     wTree.get_widget("window1").connect("delete_event", close_window, wTree.get_widget("vpaned1"))
-    wTree.get_widget("tool_apply").connect("clicked", install, treeview_update, statusIcon, wTree)
     wTree.get_widget("tool_clear").connect("clicked", clear, treeview_update, statusbar, context_id)
     wTree.get_widget("tool_select_all").connect("clicked", select_all, treeview_update, statusbar, context_id)
     wTree.get_widget("tool_refresh").connect("clicked", force_refresh, treeview_update, statusIcon, wTree)
+    wTree.get_widget("tool_apply").connect("clicked", install, treeview_update, statusIcon, wTree)
+    wTree.get_widget("cos_updates").connect("clicked", install, treeview_update, statusIcon, wTree)
 
     menu = gtk.Menu()
     menuItem3 = gtk.ImageMenuItem(gtk.STOCK_REFRESH)
@@ -1589,10 +1591,12 @@ try:
     statusIcon.connect('popup-menu', popup_menu_cb, menu)
 
     # Set text for all visible widgets (because of i18n)
-    wTree.get_widget("tool_apply").set_label(_("Install Updates"))
-    wTree.get_widget("tool_refresh").set_label(_("Refresh"))
-    wTree.get_widget("tool_select_all").set_label(_("Select All"))
     wTree.get_widget("tool_clear").set_label(_("Clear"))
+    wTree.get_widget("tool_select_all").set_label(_("Select All"))
+    wTree.get_widget("tool_refresh").set_label(_("Refresh"))
+    wTree.get_widget("tool_apply").set_label(_("Install Updates"))
+    wTree.get_widget("cos_updates").set_label(_("COS Updates"))
+    tooltips.set_tip(wTree.get_widget("cos_updates"), "Select Packages for COS Updates")
     wTree.get_widget("label9").set_text(_("Description"))
     wTree.get_widget("label8").set_text(_("Changelog"))    
 
