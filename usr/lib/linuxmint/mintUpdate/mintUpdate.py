@@ -467,10 +467,8 @@ class RefreshThread(threading.Thread):
             pkgsname = []
             if app_hidden:
                 pkgs2update = checkAPT(False, 0)
-#commands.getoutput("sudo /usr/lib/linuxmint/mintUpdate/checkAPT.py | grep \"###\"")
             else:
                 pkgs2update = checkAPT(True, self.wTree.get_widget("window1").window.xid)
-#commands.getoutput("sudo /usr/lib/linuxmint/mintUpdate/checkAPT.py --use-synaptic %s | grep \"###\"" % self.wTree.get_widget("window1").window.xid)
             pkgsname = pkgs2update.keys()
 
             # Check return value
@@ -498,13 +496,7 @@ class RefreshThread(threading.Thread):
             if ("cosupdate" in pkgsname):               
                 new_mintupdate = True
             else:
-                new_mintupdate = False
-#            if ("UPDATE###mintupdate###" in updates):                
-#                new_mintupdate = True
-#            else:
-#                new_mintupdate = False
-           
-#            updates = string.split(updates, "\n")                            
+                new_mintupdate = False                        
             
             # Look at the packages one by one
             list_of_packages = ""
@@ -519,7 +511,6 @@ class RefreshThread(threading.Thread):
                     ignored_list.append(blacklist_line.strip())
                 blacklist_file.close()                
 
-#            if (len(updates) == None):
             if (len(pkgsname) == None):
                 self.statusIcon.set_from_file(icon_up2date)
                 self.statusIcon.set_tooltip(_("Your system is up to date"))
@@ -527,11 +518,14 @@ class RefreshThread(threading.Thread):
                 log.writelines("++ System is up to date\n")
                 log.flush()
             else:
-#                for pkg in updates:
+                rulesAll=[]
+                rulesFile = open("/usr/lib/linuxmint/mintUpdate/rules","r")
+                rulesLine = rulesFile.readlines()
+                for line in rulesLine:
+                    rulesAll.append(line.split("|"))
+                rulesFile.close()
+                
                 for pkg in pkgsname:
-#                    values = string.split(pkg, "###")
-#                    if len(values) == 7:
-                    #package = pkgs2update[pkg].name    #values[1]
                     packageIsBlacklisted = False
                     for blacklist in ignored_list:
                         if fnmatch.fnmatch(pkg, blacklist):
@@ -555,38 +549,35 @@ class RefreshThread(threading.Thread):
                     warning = ""
                     rulesFile = open("/usr/lib/linuxmint/mintUpdate/rules","r")
                     rules = rulesFile.readlines()
-                    goOn = True
+                    foundVersionRule = False
                     foundPackageRule = False # whether we found a rule with the exact package name or not
-                    for rule in rules:
-                        if (goOn == True):
-                            rule_fields = rule.split("|")
-                            if (len(rule_fields) == 5):
-                                rule_package = rule_fields[0]
-                                rule_version = rule_fields[1]
-                                rule_level = rule_fields[2]
-                                rule_extraInfo = rule_fields[3]
-                                rule_warning = rule_fields[4]
-                                if (rule_package == pkg):
-                                    foundPackageRule = True
-                                    if (rule_version == newVersion):
+                    for rules in rulesAll:
+                        if (foundVersionRule == False):
+                            rule_package = rules[0]
+                            rule_version = rules[1]
+                            rule_level = rules[2]
+                            rule_extraInfo = rules[3]
+                            rule_warning = rules[4]
+                            if (rule_package == pkg):
+                                foundPackageRule = True
+                                if (rule_version == newVersion):
+                                    level = rule_level
+                                    extraInfo = rule_extraInfo
+                                    warning = rule_warning
+                                    foundVersionRule = True # We found a rule with the exact package name and version, no need to look elsewhere
+                                else:
+                                    if (rule_version == "*"):
                                         level = rule_level
                                         extraInfo = rule_extraInfo
                                         warning = rule_warning
-                                        goOn = False # We found a rule with the exact package name and version, no need to look elsewhere
-                                    else:
-                                        if (rule_version == "*"):
-                                            level = rule_level
-                                            extraInfo = rule_extraInfo
-                                            warning = rule_warning
-                                else:
-                                    if (rule_package.startswith("*")):
-                                        keyword = rule_package.replace("*", "")
-                                        index = pkg.find(keyword)
-                                        if (index > -1 and foundPackageRule == False):
-                                            level = rule_level
-                                            extraInfo = rule_extraInfo
-                                            warning = rule_warning
-                    rulesFile.close()
+                            else:
+                                if (rule_package.startswith("*")):
+                                    keyword = rule_package.replace("*", "")
+                                    index = pkg.find(keyword)
+                                    if (index > -1 and foundPackageRule == False):
+                                        level = rule_level
+                                        extraInfo = rule_extraInfo
+                                        warning = rule_warning
 
                     level = int(level)
                     if (prefs["level" + str(level) + "_visible"]):                            
