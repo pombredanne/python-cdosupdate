@@ -17,6 +17,7 @@ try:
     from user import home
     sys.path.append('/usr/lib/linuxmint/common')
     from configobj import ConfigObj
+    from getpkginfo import checkAPT
 except Exception, detail:
     print detail
     pass
@@ -398,7 +399,7 @@ class RefreshThread(threading.Thread):
     global icon_error
     global statusbar
     global context_id
-
+    
     def __init__(self, treeview_update, statusIcon, wTree):
         threading.Thread.__init__(self)
         self.treeview_update = treeview_update
@@ -462,19 +463,49 @@ class RefreshThread(threading.Thread):
             statusbar.push(context_id, _("Finding the list of updates..."))
             wTree.get_widget("vpaned1").set_position(vpaned_position)
             gtk.gdk.threads_leave()
+            pkgs2update = {}
+            pkgsname = []
             if app_hidden:
-                updates = commands.getoutput("sudo /usr/lib/linuxmint/mintUpdate/checkAPT.py | grep \"###\"")
+                pkgs2update = checkAPT(False, 0)
+#commands.getoutput("sudo /usr/lib/linuxmint/mintUpdate/checkAPT.py | grep \"###\"")
             else:
-                updates = commands.getoutput("sudo /usr/lib/linuxmint/mintUpdate/checkAPT.py --use-synaptic %s | grep \"###\"" % self.wTree.get_widget("window1").window.xid)
-           
-            # Look for mintupdate
-            if ("UPDATE###mintupdate###" in updates):                
+                pkgs2update = checkAPT(True, self.wTree.get_widget("window1").window.xid)
+#commands.getoutput("sudo /usr/lib/linuxmint/mintUpdate/checkAPT.py --use-synaptic %s | grep \"###\"" % self.wTree.get_widget("window1").window.xid)
+            pkgsname = pkgs2update.keys()
+
+            # Check return value
+            if ("ERROR" in pkgsname):
+                error_msg = commands.getoutput("/usr/lib/linuxmint/mintUpdate/checkAPT.py")
+                gtk.gdk.threads_enter()
+                self.statusIcon.set_from_file(icon_error)
+                self.statusIcon.set_tooltip(_("Could not refresh the list of packages"))
+                statusbar.push(context_id, _("Could not refresh the list of packages"))
+                log.writelines("-- Error in checkAPT.py, could not refresh the list of packages\n")
+                log.flush()
+                self.wTree.get_widget("label_error_detail").set_text(error_msg)
+                self.wTree.get_widget("label_error_detail").show()
+                self.wTree.get_widget("viewport1").show()
+                self.wTree.get_widget("scrolledwindow1").show()
+                self.wTree.get_widget("image_error").show()
+                self.wTree.get_widget("hbox_error").show()
+                #self.statusIcon.set_blinking(False)
+                self.wTree.get_widget("window1").window.set_cursor(None)
+                self.wTree.get_widget("window1").set_sensitive(True)
+                #statusbar.push(context_id, _(""))
+                gtk.gdk.threads_leave()
+                return False
+            # Check value and Look for mintupdate
+            if ("cosupdate" in pkgsname):               
                 new_mintupdate = True
             else:
                 new_mintupdate = False
+#            if ("UPDATE###mintupdate###" in updates):                
+#                new_mintupdate = True
+#            else:
+#                new_mintupdate = False
            
-            updates = string.split(updates, "\n")                            
-                
+#            updates = string.split(updates, "\n")                            
+            
             # Look at the packages one by one
             list_of_packages = ""
             num_visible = 0
@@ -488,129 +519,84 @@ class RefreshThread(threading.Thread):
                     ignored_list.append(blacklist_line.strip())
                 blacklist_file.close()                
 
-            if (len(updates) == None):
+#            if (len(updates) == None):
+            if (len(pkgsname) == None):
                 self.statusIcon.set_from_file(icon_up2date)
                 self.statusIcon.set_tooltip(_("Your system is up to date"))
                 statusbar.push(context_id, _("Your system is up to date"))
                 log.writelines("++ System is up to date\n")
                 log.flush()
             else:
-                for pkg in updates:
-                    values = string.split(pkg, "###")
-                    if len(values) == 7:
-                        status = values[0]
-                        if (status == "ERROR"):
-                            error_msg = commands.getoutput("/usr/lib/linuxmint/mintUpdate/checkAPT.py")
-                            gtk.gdk.threads_enter()
-                            self.statusIcon.set_from_file(icon_error)
-                            self.statusIcon.set_tooltip(_("Could not refresh the list of packages"))
-                            statusbar.push(context_id, _("Could not refresh the list of packages"))
-                            log.writelines("-- Error in checkAPT.py, could not refresh the list of packages\n")
-                            log.flush()
-                            self.wTree.get_widget("label_error_detail").set_text(error_msg)
-                            self.wTree.get_widget("label_error_detail").show()
-                            self.wTree.get_widget("viewport1").show()
-                            self.wTree.get_widget("scrolledwindow1").show()
-                            self.wTree.get_widget("image_error").show()
-                            self.wTree.get_widget("hbox_error").show()
-                            #self.statusIcon.set_blinking(False)
-                            self.wTree.get_widget("window1").window.set_cursor(None)
-                            self.wTree.get_widget("window1").set_sensitive(True)
-                            #statusbar.push(context_id, _(""))
-                            gtk.gdk.threads_leave()
-                            return False
-                        package = values[1]
-                        packageIsBlacklisted = False
-                        for blacklist in ignored_list:
-                            if fnmatch.fnmatch(package, blacklist):
-                                num_ignored = num_ignored + 1
-                                packageIsBlacklisted = True
-                                break
+#                for pkg in updates:
+                for pkg in pkgsname:
+#                    values = string.split(pkg, "###")
+#                    if len(values) == 7:
+                    #package = pkgs2update[pkg].name    #values[1]
+                    packageIsBlacklisted = False
+                    for blacklist in ignored_list:
+                        if fnmatch.fnmatch(pkg, blacklist):
+                            num_ignored = num_ignored + 1
+                            packageIsBlacklisted = True
+                            break
 
-                        if packageIsBlacklisted:
-                            continue
+                    if packageIsBlacklisted:
+                        continue
 
-                        newVersion = values[2]
-                        oldVersion = values[3]
-                        size = int(values[4])
-                        source_package = values[5]
-                        description = values[6]
+                    newVersion = pkgs2update[pkg].newVersion
+                    oldVersion = pkgs2update[pkg].oldVersion
+                    size = int(pkgs2update[pkg].size)
+                    sourcePackage = pkgs2update[pkg].sourcePackage
+                    description = pkgs2update[pkg].description
 
-                        strSize = size_to_string(size)
+                    strSize = size_to_string(size)
 
-                        level = 3 # Level 3 by default
-                        extraInfo = ""
-                        warning = ""
-                        rulesFile = open("/usr/lib/linuxmint/mintUpdate/rules","r")
-                        rules = rulesFile.readlines()
-                        goOn = True
-                        foundPackageRule = False # whether we found a rule with the exact package name or not
-                        for rule in rules:
-                            if (goOn == True):
-                                rule_fields = rule.split("|")
-                                if (len(rule_fields) == 5):
-                                    rule_package = rule_fields[0]
-                                    rule_version = rule_fields[1]
-                                    rule_level = rule_fields[2]
-                                    rule_extraInfo = rule_fields[3]
-                                    rule_warning = rule_fields[4]
-                                    if (rule_package == package):
-                                        foundPackageRule = True
-                                        if (rule_version == newVersion):
+                    level = 3 # Level 3 by default
+                    extraInfo = ""
+                    warning = ""
+                    rulesFile = open("/usr/lib/linuxmint/mintUpdate/rules","r")
+                    rules = rulesFile.readlines()
+                    goOn = True
+                    foundPackageRule = False # whether we found a rule with the exact package name or not
+                    for rule in rules:
+                        if (goOn == True):
+                            rule_fields = rule.split("|")
+                            if (len(rule_fields) == 5):
+                                rule_package = rule_fields[0]
+                                rule_version = rule_fields[1]
+                                rule_level = rule_fields[2]
+                                rule_extraInfo = rule_fields[3]
+                                rule_warning = rule_fields[4]
+                                if (rule_package == pkg):
+                                    foundPackageRule = True
+                                    if (rule_version == newVersion):
+                                        level = rule_level
+                                        extraInfo = rule_extraInfo
+                                        warning = rule_warning
+                                        goOn = False # We found a rule with the exact package name and version, no need to look elsewhere
+                                    else:
+                                        if (rule_version == "*"):
                                             level = rule_level
                                             extraInfo = rule_extraInfo
                                             warning = rule_warning
-                                            goOn = False # We found a rule with the exact package name and version, no need to look elsewhere
-                                        else:
-                                            if (rule_version == "*"):
-                                                level = rule_level
-                                                extraInfo = rule_extraInfo
-                                                warning = rule_warning
-                                    else:
-                                        if (rule_package.startswith("*")):
-                                            keyword = rule_package.replace("*", "")
-                                            index = package.find(keyword)
-                                            if (index > -1 and foundPackageRule == False):
-                                                level = rule_level
-                                                extraInfo = rule_extraInfo
-                                                warning = rule_warning
-                        rulesFile.close()
-
-                        level = int(level)
-                        if (prefs["level" + str(level) + "_visible"]):                            
-                            if (new_mintupdate):
-                                if (package == "mintupdate"):
-                                    list_of_packages = list_of_packages + " " + package
-                                    iter = model.insert_before(None, None)
-                                    model.set_value(iter, 0, "true")
-                                    model.row_changed(model.get_path(iter), iter)
-                                    model.set_value(iter, 1, package)
-                                    model.set_value(iter, 2, gtk.gdk.pixbuf_new_from_file("/usr/lib/linuxmint/mintUpdate/icons/level" + str(level) + ".png"))
-                                    model.set_value(iter, 3, oldVersion)
-                                    model.set_value(iter, 4, newVersion)
-                                    model.set_value(iter, 5, warning)
-                                    model.set_value(iter, 6, extraInfo)
-                                    model.set_value(iter, 7, str(level))
-                                    model.set_value(iter, 8, description)
-                                    model.set_value(iter, 9, size)
-                                    model.set_value(iter, 10, strSize)
-                                    model.set_value(iter, 11, source_package)                            
-                                    num_visible = num_visible + 1
-                                                                                                   
-                                #else:
-                                #    model.set_value(iter, 0, "false")                                    
-                            else:
-                                list_of_packages = list_of_packages + " " + package
-                                iter = model.insert_before(None, None)
-                                if (prefs["level" + str(level) + "_safe"]):
-                                    model.set_value(iter, 0, "true")                            
-                                    num_safe = num_safe + 1
-                                    download_size = download_size + size
                                 else:
-                                    model.set_value(iter, 0, "false") 
-                                                                                  
+                                    if (rule_package.startswith("*")):
+                                        keyword = rule_package.replace("*", "")
+                                        index = pkg.find(keyword)
+                                        if (index > -1 and foundPackageRule == False):
+                                            level = rule_level
+                                            extraInfo = rule_extraInfo
+                                            warning = rule_warning
+                    rulesFile.close()
+
+                    level = int(level)
+                    if (prefs["level" + str(level) + "_visible"]):                            
+                        if (new_mintupdate):
+                            if (pkg == "mintupdate"):
+                                list_of_packages = list_of_packages + " " + pkg
+                                iter = model.insert_before(None, None)
+                                model.set_value(iter, 0, "true")
                                 model.row_changed(model.get_path(iter), iter)
-                                model.set_value(iter, 1, package)
+                                model.set_value(iter, 1, pkg)
                                 model.set_value(iter, 2, gtk.gdk.pixbuf_new_from_file("/usr/lib/linuxmint/mintUpdate/icons/level" + str(level) + ".png"))
                                 model.set_value(iter, 3, oldVersion)
                                 model.set_value(iter, 4, newVersion)
@@ -620,8 +606,34 @@ class RefreshThread(threading.Thread):
                                 model.set_value(iter, 8, description)
                                 model.set_value(iter, 9, size)
                                 model.set_value(iter, 10, strSize)
-                                model.set_value(iter, 11, source_package)                            
+                                model.set_value(iter, 11, sourcePackage)                            
                                 num_visible = num_visible + 1
+                                                                                               
+                            #else:
+                            #    model.set_value(iter, 0, "false")                                    
+                        else:
+                            list_of_packages = list_of_packages + " " + pkg
+                            iter = model.insert_before(None, None)
+                            if (prefs["level" + str(level) + "_safe"]):
+                                model.set_value(iter, 0, "true")                            
+                                num_safe = num_safe + 1
+                                download_size = download_size + size
+                            else:
+                                model.set_value(iter, 0, "false") 
+                                                                              
+                            model.row_changed(model.get_path(iter), iter)
+                            model.set_value(iter, 1, pkg)
+                            model.set_value(iter, 2, gtk.gdk.pixbuf_new_from_file("/usr/lib/linuxmint/mintUpdate/icons/level" + str(level) + ".png"))
+                            model.set_value(iter, 3, oldVersion)
+                            model.set_value(iter, 4, newVersion)
+                            model.set_value(iter, 5, warning)
+                            model.set_value(iter, 6, extraInfo)
+                            model.set_value(iter, 7, str(level))
+                            model.set_value(iter, 8, description)
+                            model.set_value(iter, 9, size)
+                            model.set_value(iter, 10, strSize)
+                            model.set_value(iter, 11, sourcePackage)                            
+                            num_visible = num_visible + 1
 
                 gtk.gdk.threads_enter()  
                 if (new_mintupdate):
