@@ -399,7 +399,8 @@ class RefreshThread(threading.Thread):
     global icon_error
     global statusbar
     global context_id
-    
+    global pkgs2update
+
     def __init__(self, treeview_update, statusIcon, wTree):
         threading.Thread.__init__(self)
         self.treeview_update = treeview_update
@@ -499,7 +500,6 @@ class RefreshThread(threading.Thread):
                 new_mintupdate = False                        
             
             # Look at the packages one by one
-            list_of_packages = ""
             num_visible = 0
             num_safe = 0            
             download_size = 0
@@ -583,7 +583,6 @@ class RefreshThread(threading.Thread):
                     if (prefs["level" + str(level) + "_visible"]):                            
                         if (new_mintupdate):
                             if (pkg == "mintupdate"):
-                                list_of_packages = list_of_packages + " " + pkg
                                 iter = model.insert_before(None, None)
                                 model.set_value(iter, 0, "true")
                                 model.row_changed(model.get_path(iter), iter)
@@ -603,7 +602,6 @@ class RefreshThread(threading.Thread):
                             #else:
                             #    model.set_value(iter, 0, "false")                                    
                         else:
-                            list_of_packages = list_of_packages + " " + pkg
                             iter = model.insert_before(None, None)
                             if (prefs["level" + str(level) + "_safe"]):
                                 model.set_value(iter, 0, "true")                            
@@ -934,9 +932,9 @@ def read_configuration():
         prefs["level3_visible"] = True
         prefs["level4_visible"] = False
         prefs["level5_visible"] = False
-        prefs["level1_safe"] = True
-        prefs["level2_safe"] = True
-        prefs["level3_safe"] = True
+        prefs["level1_safe"] = False
+        prefs["level2_safe"] = False
+        prefs["level3_safe"] = False
         prefs["level4_safe"] = False
         prefs["level5_safe"] = False    
 

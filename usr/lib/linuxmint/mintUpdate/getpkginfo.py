@@ -58,6 +58,8 @@ def checkAPT(use_synaptic, window_id):
                 sourcePackage = pkg.candidate.source_name
                 description = pkg.candidate.description
                 description = description.replace('\n\n', '\n')
+                origin = pkg.candidate.origins[0].origin
+                site = pkg.candidate.origins[0].site
                 if (newVersion != oldVersion):
                     info = pkginfo()
                     info.name = package
@@ -66,6 +68,8 @@ def checkAPT(use_synaptic, window_id):
                     info.size = size
                     info.sourcePackage = sourcePackage
                     info.description = description
+                    info.origin = origin
+                    info.site = site
                     pkginfodict[info.name] = info
                     #resultString = u"UPDATE###%s###%s###%s###%s###%s###%s" % (package, newVersion, oldVersion, size, sourcePackage, description)
                     #print resultString.encode('ascii', 'xmlcharrefreplace');
