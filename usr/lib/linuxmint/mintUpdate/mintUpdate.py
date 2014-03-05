@@ -207,7 +207,7 @@ class RefreshThread(threading.Thread):
             #self.statusIcon.set_blinking(True)
             gtk.gdk.threads_leave()
 
-            model = gtk.TreeStore(str, str, gtk.gdk.Pixbuf, str, str, str, str, str, object, int, str, str) # (check, packageName, level, oldVersion, newVersion, warning, extrainfo, stringLevel, description, size, stringSize, sourcePackage)
+            model = gtk.TreeStore(str, str, gtk.gdk.Pixbuf, str, str, int, str, str, object, str, str) # (check, packageName, level, oldVersion, newVersion, size, stringSize, stringLevel, description, warning, extrainfo)
             model.set_sort_column_id(7, gtk.SORT_ASCENDING )         
 
             prefs = read_configuration()
@@ -314,7 +314,6 @@ class RefreshThread(threading.Thread):
                     newVersion = pkgs2update[pkg].newVersion
                     oldVersion = pkgs2update[pkg].oldVersion
                     size = int(pkgs2update[pkg].size)
-                    sourcePackage = pkgs2update[pkg].sourcePackage
                     description = pkgs2update[pkg].description
 
                     strSize = size_to_string(size)
@@ -365,13 +364,13 @@ class RefreshThread(threading.Thread):
                                 model.set_value(iter, 2, gtk.gdk.pixbuf_new_from_file("/usr/lib/linuxmint/mintUpdate/icons/level" + str(level) + ".png"))
                                 model.set_value(iter, 3, oldVersion)
                                 model.set_value(iter, 4, newVersion)
-                                model.set_value(iter, 5, warning)
-                                model.set_value(iter, 6, extraInfo)
+                                model.set_value(iter, 5, size)
+                                model.set_value(iter, 6, strSize)
                                 model.set_value(iter, 7, str(level))
                                 model.set_value(iter, 8, description)
-                                model.set_value(iter, 9, size)
-                                model.set_value(iter, 10, strSize)
-                                model.set_value(iter, 11, sourcePackage)
+                                model.set_value(iter, 9, warning)
+                                model.set_value(iter, 10, extraInfo)
+                                #model.set_value(iter, 11, sourcePackage)
                                 num_visible = num_visible + 1
                             #else:
                             #    model.set_value(iter, 0, "false")
@@ -389,13 +388,13 @@ class RefreshThread(threading.Thread):
                             model.set_value(iter, 2, gtk.gdk.pixbuf_new_from_file("/usr/lib/linuxmint/mintUpdate/icons/level" + str(level) + ".png"))
                             model.set_value(iter, 3, oldVersion)
                             model.set_value(iter, 4, newVersion)
-                            model.set_value(iter, 5, warning)
-                            model.set_value(iter, 6, extraInfo)
+                            model.set_value(iter, 5, size)
+                            model.set_value(iter, 6, strSize)
                             model.set_value(iter, 7, str(level))
                             model.set_value(iter, 8, description)
-                            model.set_value(iter, 9, size)
-                            model.set_value(iter, 10, strSize)
-                            model.set_value(iter, 11, sourcePackage)
+                            model.set_value(iter, 9, warning)
+                            model.set_value(iter, 10, extraInfo)
+                            #model.set_value(iter, 11, sourcePackage)#
                             num_visible = num_visible + 1
 
                 gtk.gdk.threads_enter()  
@@ -1559,8 +1558,8 @@ try:
     column5 = gtk.TreeViewColumn(_("New version"), gtk.CellRendererText(), text=4)
     column5.set_sort_column_id(4)
     column5.set_resizable(True)
-    column6 = gtk.TreeViewColumn(_("Size"), gtk.CellRendererText(), text=10)
-    column6.set_sort_column_id(9)
+    column6 = gtk.TreeViewColumn(_("Size"), gtk.CellRendererText(), text=6)
+    column6.set_sort_column_id(5)
     column6.set_resizable(True)
     treeview_update.append_column(column3)
     treeview_update.append_column(column1)
@@ -1571,8 +1570,9 @@ try:
     treeview_update.set_headers_clickable(True)
     treeview_update.set_reorderable(False)
     treeview_update.show()
-    model = gtk.TreeStore(str, str, gtk.gdk.Pixbuf, str, str, str, str, str, int, str)
-    model.set_sort_column_id( 7, gtk.SORT_ASCENDING )
+    #model = gtk.TreeStore(str, str, gtk.gdk.Pixbuf, str, str, str, str, str, int)
+    model = gtk.TreeStore(str, str, gtk.gdk.Pixbuf, str, str, int, str, str, object, str, str)
+    #model.set_sort_column_id( 7, gtk.SORT_ASCENDING )
     treeview_update.set_model(model)
     del model
     treeview_update.connect( "button-release-event", menuPopup, treeview_update, statusIcon, wTree )
