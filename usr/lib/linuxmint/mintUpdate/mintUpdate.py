@@ -208,7 +208,7 @@ class RefreshThread(threading.Thread):
             gtk.gdk.threads_leave()
 
             model = gtk.TreeStore(str, str, gtk.gdk.Pixbuf, str, str, str, str, str, object, int, str, str) # (check, packageName, level, oldVersion, newVersion, warning, extrainfo, stringLevel, description, size, stringSize, sourcePackage)
-            model.set_sort_column_id( 7, gtk.SORT_ASCENDING )         
+            model.set_sort_column_id(7, gtk.SORT_ASCENDING )         
 
             prefs = read_configuration()
             
@@ -278,12 +278,6 @@ class RefreshThread(threading.Thread):
             num_safe = 0            
             download_size = 0
             num_ignored = 0
-            ignored_list = []
-            if os.path.exists("/etc/linuxmint/mintupdate.ignored"):
-                blacklist_file = open("/etc/linuxmint/mintupdate.ignored", "r")
-                for blacklist_line in blacklist_file:
-                    ignored_list.append(blacklist_line.strip())
-                blacklist_file.close()
 
             if (len(pkgsname) == None):
                 self.statusIcon.set_from_file(icon_up2date)
@@ -292,12 +286,19 @@ class RefreshThread(threading.Thread):
                 log.writelines("++ System is up to date\n")
                 log.flush()
             else:
-                rulesAll=[]
-                rulesFile = open("/usr/lib/linuxmint/mintUpdate/rules","r")
-                rulesLine = rulesFile.readlines()
-                for line in rulesLine:
-                    rulesAll.append(line.split("|"))
-                rulesFile.close()
+                ignored_list = []
+                if os.path.exists("/etc/linuxmint/mintupdate.ignored"):
+                    blacklist_file = open("/etc/linuxmint/mintupdate.ignored", "r")
+                    for blacklist_line in blacklist_file:
+                        ignored_list.append(blacklist_line.strip())
+                    blacklist_file.close()
+                    rulesAll=[]
+                if os.path.exists("/usr/lib/linuxmint/mintUpdate/rules"):
+                    rulesFile = open("/usr/lib/linuxmint/mintUpdate/rules","r")
+                    rulesLine = rulesFile.readlines()
+                    for line in rulesLine:
+                        rulesAll.append(line.split("|"))
+                    rulesFile.close()
                 
                 for pkg in pkgsname:
                     packageIsBlacklisted = False
@@ -321,8 +322,8 @@ class RefreshThread(threading.Thread):
                     level = 3 # Level 3 by default
                     extraInfo = ""
                     warning = ""
-                    rulesFile = open("/usr/lib/linuxmint/mintUpdate/rules","r")
-                    rules = rulesFile.readlines()
+                    #rulesFile = open("/usr/lib/linuxmint/mintUpdate/rules","r")
+                    #rules = rulesFile.readlines()
                     foundVersionRule = False
                     foundPackageRule = False # whether we found a rule with the exact package name or not
                     for rules in rulesAll:
@@ -372,18 +373,17 @@ class RefreshThread(threading.Thread):
                                 model.set_value(iter, 10, strSize)
                                 model.set_value(iter, 11, sourcePackage)
                                 num_visible = num_visible + 1
-                                                                                               
                             #else:
                             #    model.set_value(iter, 0, "false")
                         else:
                             iter = model.insert_before(None, None)
+                            #print "path:", model.get_path(iter)
                             if (prefs["level" + str(level) + "_safe"]):
                                 #model.set_value(iter, 0, "true")
                                 num_safe = num_safe + 1
                                 download_size = download_size + size
                             else:
-                                model.set_value(iter, 0, "false") 
-                                                                              
+                                model.set_value(iter, 0, "false")
                             model.row_changed(model.get_path(iter), iter)
                             model.set_value(iter, 1, pkg)
                             model.set_value(iter, 2, gtk.gdk.pixbuf_new_from_file("/usr/lib/linuxmint/mintUpdate/icons/level" + str(level) + ".png"))
@@ -433,7 +433,10 @@ class RefreshThread(threading.Thread):
                         statusbar.push(context_id, _("Your system is up to date"))
                         log.writelines("++ System is up to date\n")
                         log.flush()
-
+            #treeiter = model.get_iter((0,))
+            #print("model value in row %r" % model.get_value(treeiter, 3))
+            #row = model[0]
+            #print("value in row 0:%s", row[3])
             log.writelines("++ Refresh finished\n")
             log.flush()
             # Stop the blinking
