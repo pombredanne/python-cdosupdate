@@ -166,232 +166,6 @@ class AutomaticRefreshThread(threading.Thread):
             except:
                 pass # cause it might be closed already
 
-class InstallThread(threading.Thread):
-    global icon_busy
-    global icon_up2date
-    global icon_updates
-    global icon_error
-    global icon_unknown
-    global icon_apply
-
-    def __init__(self, treeView, statusIcon, wTree):
-        threading.Thread.__init__(self)
-        self.treeView = treeView
-        self.statusIcon = statusIcon
-        self.wTree = wTree
-
-    def run(self):
-        global log
-        try:
-            log.writelines("++ Install requested by user\n")
-            log.flush()
-            gtk.gdk.threads_enter()
-            self.wTree.get_widget("window1").window.set_cursor(gtk.gdk.Cursor(gtk.gdk.WATCH))
-            self.wTree.get_widget("window1").set_sensitive(False)
-            installNeeded = False
-            packages = []
-            model = self.treeView.get_model()
-            gtk.gdk.threads_leave()
-
-            iter = model.get_iter_first()
-            history = open("/var/log/mintUpdate.history", "a")
-            while (iter != None):
-                checked = model.get_value(iter, 0)
-                if (checked == "true"):
-                    installNeeded = True
-                    package = model.get_value(iter, 1)
-                    level = model.get_value(iter, 7)
-                    oldVersion = model.get_value(iter, 3)
-                    newVersion = model.get_value(iter, 4)
-                    history.write(commands.getoutput('date +"%Y.%m.%d %H:%M:%S"') + "\t" + package + "\t" + level + "\t" + oldVersion + "\t" + newVersion + "\n")
-                    packages.append(package)
-                    log.writelines("++ Will install " + str(package) + "\n")
-                    log.flush()
-                iter = model.iter_next(iter)
-            history.close()
-
-            if (installNeeded == True):
-                                
-                proceed = True                
-                try:
-                    pkgs = ' '.join(str(pkg) for pkg in packages)
-                    warnings = commands.getoutput("/usr/lib/linuxmint/mintUpdate/checkWarnings.py %s" % pkgs)
-                    #print ("/usr/lib/linuxmint/mintUpdate/checkWarnings.py %s" % pkgs)
-                    warnings = warnings.split("###")
-                    if len(warnings) == 2:
-                        installations = warnings[0].split()
-                        removals = warnings[1].split()                                    
-                        if len(installations) > 0 or len(removals) > 0:
-                            gtk.gdk.threads_enter()
-                            try:
-                                dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING, gtk.BUTTONS_OK_CANCEL, None)
-                                dialog.set_title("")
-                                dialog.set_markup("<b>" + _("This upgrade will trigger additional changes") + "</b>")
-                                #dialog.format_secondary_markup("<i>" + _("All available upgrades for this package will be ignored.") + "</i>")                                
-                                dialog.set_icon_from_file("/usr/lib/linuxmint/mintUpdate/icons/base.svg")
-                                dialog.set_default_size(640, 480)
-                                
-                                if len(removals) > 0:
-                                    # Removals
-                                    label = gtk.Label()
-                                    if len(removals) == 1:
-                                        label.set_text(_("The following package will be removed:"))
-                                    else:
-                                        label.set_text(_("The following %d packages will be removed:") % len(removals))                                    
-                                    label.set_alignment(0, 0.5)
-                                    scrolledWindow = gtk.ScrolledWindow()
-                                    scrolledWindow.set_shadow_type(gtk.SHADOW_IN)
-                                    scrolledWindow.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-                                    treeview = gtk.TreeView()
-                                    column1 = gtk.TreeViewColumn("", gtk.CellRendererText(), text=0)
-                                    column1.set_sort_column_id(0)
-                                    column1.set_resizable(True)
-                                    treeview.append_column(column1)
-                                    treeview.set_headers_clickable(False)
-                                    treeview.set_reorderable(False)
-                                    treeview.set_headers_visible(False)                                                        
-                                    model = gtk.TreeStore(str)
-                                    removals.sort()
-                                    for pkg in removals:
-                                        iter = model.insert_before(None, None)                                
-                                        model.set_value(iter, 0, pkg)
-                                    treeview.set_model(model)
-                                    treeview.show()
-                                    scrolledWindow.add(treeview)                                
-                                    dialog.vbox.add(label)
-                                    dialog.vbox.add(scrolledWindow)
-                                
-                                if len(installations) > 0:
-                                    # Installations
-                                    label = gtk.Label()
-                                    if len(installations) == 1:
-                                        label.set_text(_("The following package will be installed:"))
-                                    else:
-                                        label.set_text(_("The following %d packages will be installed:") % len(installations))
-                                    label.set_alignment(0, 0.5)
-                                    scrolledWindow = gtk.ScrolledWindow()
-                                    scrolledWindow.set_shadow_type(gtk.SHADOW_IN)
-                                    scrolledWindow.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-                                    treeview = gtk.TreeView()
-                                    column1 = gtk.TreeViewColumn("", gtk.CellRendererText(), text=0)
-                                    column1.set_sort_column_id(0)
-                                    column1.set_resizable(True)
-                                    treeview.append_column(column1)
-                                    treeview.set_headers_clickable(False)
-                                    treeview.set_reorderable(False)
-                                    treeview.set_headers_visible(False)                                                        
-                                    model = gtk.TreeStore(str)
-                                    installations.sort()
-                                    for pkg in installations:
-                                        iter = model.insert_before(None, None)                                
-                                        model.set_value(iter, 0, pkg)                               
-                                    treeview.set_model(model)
-                                    treeview.show()
-                                    scrolledWindow.add(treeview)   
-                                    dialog.vbox.add(label)                             
-                                    dialog.vbox.add(scrolledWindow)                                                            
-                                
-                                dialog.show_all()                
-                                if dialog.run() == gtk.RESPONSE_OK:
-                                    proceed = True
-                                else: 
-                                    proceed = False
-                                dialog.destroy()  
-                            except Exception, detail:
-                                print detail
-                            gtk.gdk.threads_leave()   
-                        else:
-                            proceed = True
-                except Exception, details: 
-                    print details
-                                                                       
-                if proceed:
-                    gtk.gdk.threads_enter()
-                    self.statusIcon.set_from_file(icon_apply)
-                    self.statusIcon.set_tooltip(_("Installing updates"))
-                    gtk.gdk.threads_leave()
-                    
-                    log.writelines("++ Ready to launch synaptic\n")
-                    log.flush()
-                    cmd = ["sudo", "/usr/sbin/synaptic", "--hide-main-window",  \
-                            "--non-interactive", "--parent-window-id", "%s" % self.wTree.get_widget("window1").window.xid]
-                    cmd.append("-o")
-                    cmd.append("Synaptic::closeZvt=false")
-                    cmd.append("--progress-str")
-                    cmd.append("\"" + _("Please wait, this can take some time") + "\"")
-                    cmd.append("--finish-str")
-                    cmd.append("\"" + _("Update is complete") + "\"")
-                    f = tempfile.NamedTemporaryFile()
-
-                    for pkg in packages:
-                        f.write("%s\tinstall\n" % pkg)
-                    cmd.append("--set-selections-file")
-                    cmd.append("%s" % f.name)
-                    f.flush()
-                    comnd = Popen(' '.join(cmd), stdout=log, stderr=log, shell=True)
-                    returnCode = comnd.wait()
-                    log.writelines("++ Return code:" + str(returnCode) + "\n")
-                    #sts = os.waitpid(comnd.pid, 0)
-                    f.close()
-                    log.writelines("++ Install finished\n")
-                    log.flush()
-                    
-                    gtk.gdk.threads_enter()
-                    global app_hidden
-                    app_hidden = True
-                    self.wTree.get_widget("window1").hide()
-                    gtk.gdk.threads_leave()
-                    
-                    if "mintupdate" in packages:
-                        # Restart                        
-                        try:
-                            log.writelines("++ Mintupdate was updated, restarting it in root mode...\n")
-                            log.flush()
-                            log.close()
-                        except:
-                            pass #cause we might have closed it already
-			
-                        command = "gksudo --message \"" + _("Please enter your password to start the update manager") + "\" /usr/lib/linuxmint/mintUpdate/mintUpdate.py show &"                        
-                        if ("KDE" in commands.getoutput("grep DESKTOP /etc/linuxmint/info")):
-                            command = "kdesudo -i /usr/share/linuxmint/logo.png --comment \"" + _("Please enter your password to start the update manager") + "\" -d /usr/lib/linuxmint/mintUpdate/mintUpdate.py show &"
-                        os.system(command)
-                    
-                    else:
-                        # Refresh
-                        gtk.gdk.threads_enter()
-                        self.statusIcon.set_from_file(icon_busy)
-                        self.statusIcon.set_tooltip(_("Checking for updates"))
-                        self.wTree.get_widget("window1").window.set_cursor(None)
-                        self.wTree.get_widget("window1").set_sensitive(True)                        
-                        gtk.gdk.threads_leave()
-                        refresh = RefreshThread(self.treeView, self.statusIcon, self.wTree)
-                        refresh.start()
-                else:
-                    # Stop the blinking but don't refresh
-                    gtk.gdk.threads_enter()
-                    self.wTree.get_widget("window1").window.set_cursor(None)
-                    self.wTree.get_widget("window1").set_sensitive(True)
-                    gtk.gdk.threads_leave()
-            else:
-                # Stop the blinking but don't refresh
-                gtk.gdk.threads_enter()
-                self.wTree.get_widget("window1").window.set_cursor(None)
-                self.wTree.get_widget("window1").set_sensitive(True)
-                gtk.gdk.threads_leave()
-
-        except Exception, detail:
-            log.writelines("-- Exception occured in the install thread: " + str(detail) + "\n")
-            log.flush()
-            gtk.gdk.threads_enter()
-            self.statusIcon.set_from_file(icon_error)
-            self.statusIcon.set_tooltip(_("Could not install the security updates"))
-            log.writelines("-- Could not install security updates\n")
-            log.flush()
-            #self.statusIcon.set_blinking(False)
-            self.wTree.get_widget("window1").window.set_cursor(None)
-            self.wTree.get_widget("window1").set_sensitive(True)
-            gtk.gdk.threads_leave()
-
 class RefreshThread(threading.Thread):
     global icon_busy
     global icon_up2date
@@ -497,7 +271,7 @@ class RefreshThread(threading.Thread):
             if ("cosupdate" in pkgsname):               
                 new_mintupdate = True
             else:
-                new_mintupdate = False                        
+                new_mintupdate = False
             
             # Look at the packages one by one
             num_visible = 0
@@ -509,7 +283,7 @@ class RefreshThread(threading.Thread):
                 blacklist_file = open("/etc/linuxmint/mintupdate.ignored", "r")
                 for blacklist_line in blacklist_file:
                     ignored_list.append(blacklist_line.strip())
-                blacklist_file.close()                
+                blacklist_file.close()
 
             if (len(pkgsname) == None):
                 self.statusIcon.set_from_file(icon_up2date)
@@ -580,7 +354,7 @@ class RefreshThread(threading.Thread):
                                         warning = rule_warning
 
                     level = int(level)
-                    if (prefs["level" + str(level) + "_visible"]):                            
+                    if (prefs["level" + str(level) + "_visible"]):
                         if (new_mintupdate):
                             if (pkg == "mintupdate"):
                                 iter = model.insert_before(None, None)
@@ -596,15 +370,15 @@ class RefreshThread(threading.Thread):
                                 model.set_value(iter, 8, description)
                                 model.set_value(iter, 9, size)
                                 model.set_value(iter, 10, strSize)
-                                model.set_value(iter, 11, sourcePackage)                            
+                                model.set_value(iter, 11, sourcePackage)
                                 num_visible = num_visible + 1
                                                                                                
                             #else:
-                            #    model.set_value(iter, 0, "false")                                    
+                            #    model.set_value(iter, 0, "false")
                         else:
                             iter = model.insert_before(None, None)
                             if (prefs["level" + str(level) + "_safe"]):
-                                #model.set_value(iter, 0, "true")                            
+                                #model.set_value(iter, 0, "true")
                                 num_safe = num_safe + 1
                                 download_size = download_size + size
                             else:
@@ -621,7 +395,7 @@ class RefreshThread(threading.Thread):
                             model.set_value(iter, 8, description)
                             model.set_value(iter, 9, size)
                             model.set_value(iter, 10, strSize)
-                            model.set_value(iter, 11, sourcePackage)                            
+                            model.set_value(iter, 11, sourcePackage)
                             num_visible = num_visible + 1
 
                 gtk.gdk.threads_enter()  
@@ -645,7 +419,7 @@ class RefreshThread(threading.Thread):
                             if (num_ignored == 0):
                                 self.statusString = _("%(recommended)d recommended updates available (%(size)s)") % {'recommended':num_safe, 'size':size_to_string(download_size)}
                             elif (num_ignored == 1):
-                                self.statusString = _("%(recommended)d recommended updates available (%(size)s), 1 ignored") % {'recommended':num_safe, 'size':size_to_string(download_size)}                            
+                                self.statusString = _("%(recommended)d recommended updates available (%(size)s), 1 ignored") % {'recommended':num_safe, 'size':size_to_string(download_size)}
                             elif (num_ignored > 0):
                                 self.statusString = _("%(recommended)d recommended updates available (%(size)s), %(ignored)d ignored") % {'recommended':num_safe, 'size':size_to_string(download_size), 'ignored':num_ignored}
                         self.statusIcon.set_from_file(icon_updates)
@@ -706,6 +480,231 @@ class RefreshThread(threading.Thread):
         if (foundSomething):
             changes = self.checkDependencies(changes, cache)
         return changes
+
+class InstallThread(threading.Thread):
+    global icon_busy
+    global icon_up2date
+    global icon_updates
+    global icon_error
+    global icon_unknown
+    global icon_apply
+
+    def __init__(self, treeView, statusIcon, wTree):
+        threading.Thread.__init__(self)
+        self.treeView = treeView
+        self.statusIcon = statusIcon
+        self.wTree = wTree
+
+    def run(self):
+        global log
+        try:
+            log.writelines("++ Install requested by user\n")
+            log.flush()
+            gtk.gdk.threads_enter()
+            self.wTree.get_widget("window1").window.set_cursor(gtk.gdk.Cursor(gtk.gdk.WATCH))
+            self.wTree.get_widget("window1").set_sensitive(False)
+            installNeeded = False
+            packages = []
+            model = self.treeView.get_model()
+            gtk.gdk.threads_leave()
+
+            iter = model.get_iter_first()
+            history = open("/var/log/mintUpdate.history", "a")
+            while (iter != None):
+                checked = model.get_value(iter, 0)
+                if (checked == "true"):
+                    installNeeded = True
+                    package = model.get_value(iter, 1)
+                    level = model.get_value(iter, 7)
+                    oldVersion = model.get_value(iter, 3)
+                    newVersion = model.get_value(iter, 4)
+                    history.write(commands.getoutput('date +"%Y.%m.%d %H:%M:%S"') + "\t" + package + "\t" + level + "\t" + oldVersion + "\t" + newVersion + "\n")
+                    packages.append(package)
+                    log.writelines("++ Will install " + str(package) + "\n")
+                    log.flush()
+                iter = model.iter_next(iter)
+            history.close()
+
+            if (installNeeded == True):
+                proceed = True
+                try:
+                    pkgs = ' '.join(str(pkg) for pkg in packages)
+                    warnings = commands.getoutput("/usr/lib/linuxmint/mintUpdate/checkWarnings.py %s" % pkgs)
+                    #print ("/usr/lib/linuxmint/mintUpdate/checkWarnings.py %s" % pkgs)
+                    warnings = warnings.split("###")
+                    if len(warnings) == 2:
+                        installations = warnings[0].split()
+                        removals = warnings[1].split()
+                        if len(installations) > 0 or len(removals) > 0:
+                            gtk.gdk.threads_enter()
+                            try:
+                                dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING, gtk.BUTTONS_OK_CANCEL, None)
+                                dialog.set_title("")
+                                dialog.set_markup("<b>" + _("This upgrade will trigger additional changes") + "</b>")
+                                #dialog.format_secondary_markup("<i>" + _("All available upgrades for this package will be ignored.") + "</i>")
+                                dialog.set_icon_from_file("/usr/lib/linuxmint/mintUpdate/icons/base.svg")
+                                dialog.set_default_size(640, 480)
+                                
+                                if len(removals) > 0:
+                                    # Removals
+                                    label = gtk.Label()
+                                    if len(removals) == 1:
+                                        label.set_text(_("The following package will be removed:"))
+                                    else:
+                                        label.set_text(_("The following %d packages will be removed:") % len(removals))
+                                    label.set_alignment(0, 0.5)
+                                    scrolledWindow = gtk.ScrolledWindow()
+                                    scrolledWindow.set_shadow_type(gtk.SHADOW_IN)
+                                    scrolledWindow.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+                                    treeview = gtk.TreeView()
+                                    column1 = gtk.TreeViewColumn("", gtk.CellRendererText(), text=0)
+                                    column1.set_sort_column_id(0)
+                                    column1.set_resizable(True)
+                                    treeview.append_column(column1)
+                                    treeview.set_headers_clickable(False)
+                                    treeview.set_reorderable(False)
+                                    treeview.set_headers_visible(False)
+                                    model = gtk.TreeStore(str)
+                                    removals.sort()
+                                    for pkg in removals:
+                                        iter = model.insert_before(None, None)
+                                        model.set_value(iter, 0, pkg)
+                                    treeview.set_model(model)
+                                    treeview.show()
+                                    scrolledWindow.add(treeview)
+                                    dialog.vbox.add(label)
+                                    dialog.vbox.add(scrolledWindow)
+                                
+                                if len(installations) > 0:
+                                    # Installations
+                                    label = gtk.Label()
+                                    if len(installations) == 1:
+                                        label.set_text(_("The following package will be installed:"))
+                                    else:
+                                        label.set_text(_("The following %d packages will be installed:") % len(installations))
+                                    label.set_alignment(0, 0.5)
+                                    scrolledWindow = gtk.ScrolledWindow()
+                                    scrolledWindow.set_shadow_type(gtk.SHADOW_IN)
+                                    scrolledWindow.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+                                    treeview = gtk.TreeView()
+                                    column1 = gtk.TreeViewColumn("", gtk.CellRendererText(), text=0)
+                                    column1.set_sort_column_id(0)
+                                    column1.set_resizable(True)
+                                    treeview.append_column(column1)
+                                    treeview.set_headers_clickable(False)
+                                    treeview.set_reorderable(False)
+                                    treeview.set_headers_visible(False)
+                                    model = gtk.TreeStore(str)
+                                    installations.sort()
+                                    for pkg in installations:
+                                        iter = model.insert_before(None, None)
+                                        model.set_value(iter, 0, pkg)
+                                    treeview.set_model(model)
+                                    treeview.show()
+                                    scrolledWindow.add(treeview)   
+                                    dialog.vbox.add(label)
+                                    dialog.vbox.add(scrolledWindow)
+                                
+                                dialog.show_all()
+                                if dialog.run() == gtk.RESPONSE_OK:
+                                    proceed = True
+                                else: 
+                                    proceed = False
+                                dialog.destroy()  
+                            except Exception, detail:
+                                print detail
+                            gtk.gdk.threads_leave()   
+                        else:
+                            proceed = True
+                except Exception, details: 
+                    print details
+                                                                       
+                if proceed:
+                    gtk.gdk.threads_enter()
+                    self.statusIcon.set_from_file(icon_apply)
+                    self.statusIcon.set_tooltip(_("Installing updates"))
+                    gtk.gdk.threads_leave()
+                    
+                    log.writelines("++ Ready to launch synaptic\n")
+                    log.flush()
+                    cmd = ["sudo", "/usr/sbin/synaptic", "--hide-main-window",  \
+                            "--non-interactive", "--parent-window-id", "%s" % self.wTree.get_widget("window1").window.xid]
+                    cmd.append("-o")
+                    cmd.append("Synaptic::closeZvt=false")
+                    cmd.append("--progress-str")
+                    cmd.append("\"" + _("Please wait, this can take some time") + "\"")
+                    cmd.append("--finish-str")
+                    cmd.append("\"" + _("Update is complete") + "\"")
+                    f = tempfile.NamedTemporaryFile()
+
+                    for pkg in packages:
+                        f.write("%s\tinstall\n" % pkg)
+                    cmd.append("--set-selections-file")
+                    cmd.append("%s" % f.name)
+                    f.flush()
+                    comnd = Popen(' '.join(cmd), stdout=log, stderr=log, shell=True)
+                    returnCode = comnd.wait()
+                    log.writelines("++ Return code:" + str(returnCode) + "\n")
+                    #sts = os.waitpid(comnd.pid, 0)
+                    f.close()
+                    log.writelines("++ Install finished\n")
+                    log.flush()
+
+                    gtk.gdk.threads_enter()
+                    global app_hidden
+                    app_hidden = True
+                    self.wTree.get_widget("window1").hide()
+                    gtk.gdk.threads_leave()
+
+                    if "mintupdate" in packages:
+                        # Restart
+                        try:
+                            log.writelines("++ Mintupdate was updated, restarting it in root mode...\n")
+                            log.flush()
+                            log.close()
+                        except:
+                            pass #cause we might have closed it already
+
+                        command = "gksudo --message \"" + _("Please enter your password to start the update manager") + "\" /usr/lib/linuxmint/mintUpdate/mintUpdate.py show &"                        
+                        if ("KDE" in commands.getoutput("grep DESKTOP /etc/linuxmint/info")):
+                            command = "kdesudo -i /usr/share/linuxmint/logo.png --comment \"" + _("Please enter your password to start the update manager") + "\" -d /usr/lib/linuxmint/mintUpdate/mintUpdate.py show &"
+                        os.system(command)
+
+                    else:
+                        # Refresh
+                        gtk.gdk.threads_enter()
+                        self.statusIcon.set_from_file(icon_busy)
+                        self.statusIcon.set_tooltip(_("Checking for updates"))
+                        self.wTree.get_widget("window1").window.set_cursor(None)
+                        self.wTree.get_widget("window1").set_sensitive(True)
+                        gtk.gdk.threads_leave()
+                        refresh = RefreshThread(self.treeView, self.statusIcon, self.wTree)
+                        refresh.start()
+                else:
+                    # Stop the blinking but don't refresh
+                    gtk.gdk.threads_enter()
+                    self.wTree.get_widget("window1").window.set_cursor(None)
+                    self.wTree.get_widget("window1").set_sensitive(True)
+                    gtk.gdk.threads_leave()
+            else:
+                # Stop the blinking but don't refresh
+                gtk.gdk.threads_enter()
+                self.wTree.get_widget("window1").window.set_cursor(None)
+                self.wTree.get_widget("window1").set_sensitive(True)
+                gtk.gdk.threads_leave()
+
+        except Exception, detail:
+            log.writelines("-- Exception occured in the install thread: " + str(detail) + "\n")
+            log.flush()
+            gtk.gdk.threads_enter()
+            self.statusIcon.set_from_file(icon_error)
+            self.statusIcon.set_tooltip(_("Could not install the security updates"))
+            log.writelines("-- Could not install security updates\n")
+            log.flush()
+            #self.statusIcon.set_blinking(False)
+            self.wTree.get_widget("window1").window.set_cursor(None)
+            self.wTree.get_widget("window1").set_sensitive(True)
+            gtk.gdk.threads_leave()
 
 def force_refresh(widget, treeview, statusIcon, wTree):
     refresh = RefreshThread(treeview, statusIcon, wTree)
@@ -1314,10 +1313,10 @@ def activate_icon_cb(widget, data, wTree):
                 pass #cause we might have closed it already
 
             command = "gksudo --message \"" + _("Please enter your password to start the update manager") + "\" /usr/lib/linuxmint/mintUpdate/mintUpdate.py show &"
-            desktop_environnment = commands.getoutput("/usr/lib/linuxmint/common/env_check.sh")                            
+            desktop_environnment = commands.getoutput("/usr/lib/linuxmint/common/env_check.sh")
             if (desktop_environnment == "KDE"):
                 command = "kdesudo -i /usr/share/linuxmint/logo.png --comment \"" + _("Please enter your password to start the update manager") + "\" -d /usr/lib/linuxmint/mintUpdate/mintUpdate.py show &"
-            os.system(command)            
+            os.system(command)
 
         else:
             wTree.get_widget("window1").show()
