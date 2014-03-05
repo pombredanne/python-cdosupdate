@@ -604,7 +604,7 @@ class RefreshThread(threading.Thread):
                         else:
                             iter = model.insert_before(None, None)
                             if (prefs["level" + str(level) + "_safe"]):
-                                model.set_value(iter, 0, "true")                            
+                                #model.set_value(iter, 0, "true")                            
                                 num_safe = num_safe + 1
                                 download_size = download_size + size
                             else:
@@ -932,9 +932,9 @@ def read_configuration():
         prefs["level3_visible"] = True
         prefs["level4_visible"] = False
         prefs["level5_visible"] = False
-        prefs["level1_safe"] = False
-        prefs["level2_safe"] = False
-        prefs["level3_safe"] = False
+        prefs["level1_safe"] = True
+        prefs["level2_safe"] = True
+        prefs["level3_safe"] = True
         prefs["level4_safe"] = False
         prefs["level5_safe"] = False    
 
