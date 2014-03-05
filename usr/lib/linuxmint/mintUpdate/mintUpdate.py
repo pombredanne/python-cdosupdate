@@ -706,9 +706,140 @@ class InstallThread(threading.Thread):
             self.wTree.get_widget("window1").set_sensitive(True)
             gtk.gdk.threads_leave()
 
-def force_refresh(widget, treeview, statusIcon, wTree):
-    refresh = RefreshThread(treeview, statusIcon, wTree)
-    refresh.start()
+## callback function ##
+# funcs4gui
+def read_configuration():
+    global icon_busy
+    global icon_up2date
+    global icon_updates
+    global icon_error
+    global icon_unknown
+    global icon_apply
+
+    config = ConfigObj("/etc/linuxmint/mintUpdate.conf")
+    prefs = {}
+
+    #Read refresh config
+    try:
+        prefs["timer_minutes"] = int(config['refresh']['timer_minutes'])
+        prefs["timer_hours"] = int(config['refresh']['timer_hours'])
+        prefs["timer_days"] = int(config['refresh']['timer_days'])
+    except:
+        prefs["timer_minutes"] = 15
+        prefs["timer_hours"] = 0
+        prefs["timer_days"] = 0
+
+    #Read update config
+    try:
+        prefs["delay"] = int(config['update']['delay'])
+        prefs["ping_domain"] = config['update']['ping_domain']
+        prefs["dist_upgrade"] = (config['update']['dist_upgrade'] == "True")
+    except:
+        prefs["delay"] = 30
+        prefs["ping_domain"] = "google.com"
+        prefs["dist_upgrade"] = True
+
+    #Read icons config
+    try:
+        icon_busy = config['icons']['busy']
+        icon_up2date = config['icons']['up2date']
+        icon_updates = config['icons']['updates']
+        icon_error = config['icons']['error']
+        icon_unknown = config['icons']['unknown']
+        icon_apply = config['icons']['apply']
+    except:
+        icon_busy = "/usr/lib/linuxmint/mintUpdate/icons/base.svg"
+        icon_up2date = "/usr/lib/linuxmint/mintUpdate/icons/base-apply.svg"
+        icon_updates = "/usr/lib/linuxmint/mintUpdate/icons/base-info.svg"
+        icon_error = "/usr/lib/linuxmint/mintUpdate/icons/base-error2.svg"
+        icon_unknown = "/usr/lib/linuxmint/mintUpdate/icons/base.svg"
+        icon_apply = "/usr/lib/linuxmint/mintUpdate/icons/base-exec.svg"
+
+    #Read levels config
+    try:
+        prefs["level1_visible"] = (config['levels']['level1_visible'] == "True")
+        prefs["level2_visible"] = (config['levels']['level2_visible'] == "True")
+        prefs["level3_visible"] = (config['levels']['level3_visible'] == "True")
+        prefs["level4_visible"] = (config['levels']['level4_visible'] == "True")
+        prefs["level5_visible"] = (config['levels']['level5_visible'] == "True")
+        prefs["level1_safe"] = (config['levels']['level1_safe'] == "True")
+        prefs["level2_safe"] = (config['levels']['level2_safe'] == "True")
+        prefs["level3_safe"] = (config['levels']['level3_safe'] == "True")
+        prefs["level4_safe"] = (config['levels']['level4_safe'] == "True")
+        prefs["level5_safe"] = (config['levels']['level5_safe'] == "True")
+    except:
+        prefs["level1_visible"] = True
+        prefs["level2_visible"] = True
+        prefs["level3_visible"] = True
+        prefs["level4_visible"] = False
+        prefs["level5_visible"] = False
+        prefs["level1_safe"] = True
+        prefs["level2_safe"] = True
+        prefs["level3_safe"] = True
+        prefs["level4_safe"] = False
+        prefs["level5_safe"] = False    
+
+    #Read columns config
+    try:
+        prefs["level_column_visible"] = (config['visible_columns']['level'] == "True")
+    except:
+        prefs["level_column_visible"] = True
+    try:
+        prefs["package_column_visible"] = (config['visible_columns']['package'] == "True")
+    except:
+        prefs["package_column_visible"] = True
+    try:
+        prefs["old_version_column_visible"] = (config['visible_columns']['old_version'] == "True")
+    except:
+        prefs["old_version_column_visible"] = True
+    try:
+        prefs["new_version_column_visible"] = (config['visible_columns']['new_version'] == "True")
+    except:
+        prefs["new_version_column_visible"] = True
+    try:
+        prefs["size_column_visible"] = (config['visible_columns']['size'] == "True")
+    except:
+        prefs["size_column_visible"] = True
+
+    #Read window dimensions
+    try:
+        prefs["dimensions_x"] = int(config['dimensions']['x'])
+        prefs["dimensions_y"] = int(config['dimensions']['y'])
+        prefs["dimensions_pane_position"] = int(config['dimensions']['pane_position'])
+    except:
+        prefs["dimensions_x"] = 790
+        prefs["dimensions_y"] = 540
+        prefs["dimensions_pane_position"] = 230
+
+    #Read package blacklist
+    try:
+        prefs["blacklisted_packages"] = config['blacklisted_packages']
+    except:
+        prefs["blacklisted_packages"] = []
+
+    return prefs
+    
+def menuPopup(widget, event, treeview_update, statusIcon, wTree):
+    if event.button == 3:
+        (model, iter) = widget.get_selection().get_selected()
+        if (iter != None):
+            selected_package = model.get_value(iter, 1)
+            menu = gtk.Menu()                
+            menuItem = gtk.MenuItem(_("Ignore updates for this package"))
+            menuItem.connect("activate", add_to_ignore_list, treeview_update, selected_package, statusIcon, wTree)
+            menu.append(menuItem)        
+            menu.show_all()        
+            menu.popup( None, None, None, 3, 0)
+
+def display_selected_package(selection, wTree):    
+    wTree.get_widget("textview_description").get_buffer().set_text("")
+    wTree.get_widget("textview_changes").get_buffer().set_text("")            
+    (model, iter) = selection.get_selected()
+    if (iter != None):
+        selected_package = model.get_value(iter, 1)
+        description_txt = model.get_value(iter, 8)                
+        wTree.get_widget("notebook_details").set_current_page(0)
+        wTree.get_widget("textview_description").get_buffer().set_text(description_txt)
 
 def clear(widget, treeView, statusbar, context_id):
     model = treeView.get_model()
@@ -741,9 +872,41 @@ def select_all(widget, treeView, statusbar, context_id):
     else:
         statusbar.push(context_id, _("%(selected)d updates selected (%(size)s)") % {'selected':num_selected, 'size':size_to_string(download_size)})
 
+def force_refresh(widget, treeview, statusIcon, wTree):
+    refresh = RefreshThread(treeview, statusIcon, wTree)
+    refresh.start()
+
 def install(widget, treeView, statusIcon, wTree):
     install = InstallThread(treeView, statusIcon, wTree)
     install.start()
+
+def switch_page(notebook, page, page_num, Wtree, treeView):
+    selection = treeView.get_selection()
+    (model, iter) = selection.get_selected()
+    if (iter != None):
+        selected_package = model.get_value(iter, 1)
+        description_txt = model.get_value(iter, 8)   
+        if (page_num == 0):
+            # Description tab
+            wTree.get_widget("textview_description").get_buffer().set_text(description_txt)
+        if (page_num == 1):
+            # Changelog tab            
+            level = model.get_value(iter, 7)
+            version = model.get_value(iter, 4)
+            retriever = ChangelogRetriever(selected_package, level, version, wTree)
+            retriever.start()
+
+def close_window(window, event, vpaned):
+    global app_hidden
+    window.hide()
+    save_window_size(window, vpaned)
+    app_hidden = True
+    return True
+
+def hide_window(widget, window):
+    global app_hidden
+    window.hide()
+    app_hidden = True
 
 def change_icon(widget, button, prefs_tree, treeview, statusIcon, wTree):
     global icon_busy
@@ -865,117 +1028,6 @@ def history_clear(widget, tree):
 
 def pref_cancel(widget, prefs_tree):
     prefs_tree.get_widget("window2").hide()
-
-def read_configuration():
-    global icon_busy
-    global icon_up2date
-    global icon_updates
-    global icon_error
-    global icon_unknown
-    global icon_apply
-
-    config = ConfigObj("/etc/linuxmint/mintUpdate.conf")
-    prefs = {}
-
-    #Read refresh config
-    try:
-        prefs["timer_minutes"] = int(config['refresh']['timer_minutes'])
-        prefs["timer_hours"] = int(config['refresh']['timer_hours'])
-        prefs["timer_days"] = int(config['refresh']['timer_days'])
-    except:
-        prefs["timer_minutes"] = 15
-        prefs["timer_hours"] = 0
-        prefs["timer_days"] = 0
-
-    #Read update config
-    try:
-        prefs["delay"] = int(config['update']['delay'])
-        prefs["ping_domain"] = config['update']['ping_domain']
-        prefs["dist_upgrade"] = (config['update']['dist_upgrade'] == "True")
-    except:
-        prefs["delay"] = 30
-        prefs["ping_domain"] = "google.com"
-        prefs["dist_upgrade"] = True
-
-    #Read icons config
-    try:
-        icon_busy = config['icons']['busy']
-        icon_up2date = config['icons']['up2date']
-        icon_updates = config['icons']['updates']
-        icon_error = config['icons']['error']
-        icon_unknown = config['icons']['unknown']
-        icon_apply = config['icons']['apply']
-    except:
-        icon_busy = "/usr/lib/linuxmint/mintUpdate/icons/base.svg"
-        icon_up2date = "/usr/lib/linuxmint/mintUpdate/icons/base-apply.svg"
-        icon_updates = "/usr/lib/linuxmint/mintUpdate/icons/base-info.svg"
-        icon_error = "/usr/lib/linuxmint/mintUpdate/icons/base-error2.svg"
-        icon_unknown = "/usr/lib/linuxmint/mintUpdate/icons/base.svg"
-        icon_apply = "/usr/lib/linuxmint/mintUpdate/icons/base-exec.svg"
-
-    #Read levels config
-    try:
-        prefs["level1_visible"] = (config['levels']['level1_visible'] == "True")
-        prefs["level2_visible"] = (config['levels']['level2_visible'] == "True")
-        prefs["level3_visible"] = (config['levels']['level3_visible'] == "True")
-        prefs["level4_visible"] = (config['levels']['level4_visible'] == "True")
-        prefs["level5_visible"] = (config['levels']['level5_visible'] == "True")
-        prefs["level1_safe"] = (config['levels']['level1_safe'] == "True")
-        prefs["level2_safe"] = (config['levels']['level2_safe'] == "True")
-        prefs["level3_safe"] = (config['levels']['level3_safe'] == "True")
-        prefs["level4_safe"] = (config['levels']['level4_safe'] == "True")
-        prefs["level5_safe"] = (config['levels']['level5_safe'] == "True")
-    except:
-        prefs["level1_visible"] = True
-        prefs["level2_visible"] = True
-        prefs["level3_visible"] = True
-        prefs["level4_visible"] = False
-        prefs["level5_visible"] = False
-        prefs["level1_safe"] = True
-        prefs["level2_safe"] = True
-        prefs["level3_safe"] = True
-        prefs["level4_safe"] = False
-        prefs["level5_safe"] = False    
-
-    #Read columns config
-    try:
-        prefs["level_column_visible"] = (config['visible_columns']['level'] == "True")
-    except:
-        prefs["level_column_visible"] = True
-    try:
-        prefs["package_column_visible"] = (config['visible_columns']['package'] == "True")
-    except:
-        prefs["package_column_visible"] = True
-    try:
-        prefs["old_version_column_visible"] = (config['visible_columns']['old_version'] == "True")
-    except:
-        prefs["old_version_column_visible"] = True
-    try:
-        prefs["new_version_column_visible"] = (config['visible_columns']['new_version'] == "True")
-    except:
-        prefs["new_version_column_visible"] = True
-    try:
-        prefs["size_column_visible"] = (config['visible_columns']['size'] == "True")
-    except:
-        prefs["size_column_visible"] = True
-
-    #Read window dimensions
-    try:
-        prefs["dimensions_x"] = int(config['dimensions']['x'])
-        prefs["dimensions_y"] = int(config['dimensions']['y'])
-        prefs["dimensions_pane_position"] = int(config['dimensions']['pane_position'])
-    except:
-        prefs["dimensions_x"] = 790
-        prefs["dimensions_y"] = 540
-        prefs["dimensions_pane_position"] = 230
-
-    #Read package blacklist
-    try:
-        prefs["blacklisted_packages"] = config['blacklisted_packages']
-    except:
-        prefs["blacklisted_packages"] = []
-
-    return prefs
 
 def open_repositories(widget):
     if os.path.exists("/usr/bin/software-sources"):
@@ -1288,18 +1340,6 @@ def popup_menu_cb(widget, button, time, data = None):
             data.popup(None, None, gtk.status_icon_position_menu, 3, time, widget)
     pass
 
-def close_window(window, event, vpaned):
-    global app_hidden
-    window.hide()
-    save_window_size(window, vpaned)
-    app_hidden = True
-    return True
-
-def hide_window(widget, window):
-    global app_hidden
-    window.hide()
-    app_hidden = True
-
 def activate_icon_cb(widget, data, wTree):
     global app_hidden
     if (app_hidden == True):
@@ -1334,32 +1374,6 @@ def save_window_size(window, vpaned):
     config['dimensions']['y'] = window.get_size()[1]
     config['dimensions']['pane_position'] = vpaned.get_position()
     config.write()
-
-def display_selected_package(selection, wTree):    
-    wTree.get_widget("textview_description").get_buffer().set_text("")
-    wTree.get_widget("textview_changes").get_buffer().set_text("")            
-    (model, iter) = selection.get_selected()
-    if (iter != None):
-        selected_package = model.get_value(iter, 1)
-        description_txt = model.get_value(iter, 8)                
-        wTree.get_widget("notebook_details").set_current_page(0)
-        wTree.get_widget("textview_description").get_buffer().set_text(description_txt)
-
-def switch_page(notebook, page, page_num, Wtree, treeView):
-    selection = treeView.get_selection()
-    (model, iter) = selection.get_selected()
-    if (iter != None):
-        selected_package = model.get_value(iter, 1)
-        description_txt = model.get_value(iter, 8)   
-        if (page_num == 0):
-            # Description tab
-            wTree.get_widget("textview_description").get_buffer().set_text(description_txt)
-        if (page_num == 1):
-            # Changelog tab            
-            level = model.get_value(iter, 7)
-            version = model.get_value(iter, 4)
-            retriever = ChangelogRetriever(selected_package, level, version, wTree)
-            retriever.start()
 
 def celldatafunction_checkbox(column, cell, model, iter):
     cell.set_property("activatable", True)
@@ -1415,18 +1429,6 @@ def setVisibleColumn(checkmenuitem, column, configName):
         config['visible_columns'][configName] = checkmenuitem.get_active()
     config.write()
     column.set_visible(checkmenuitem.get_active())
-    
-def menuPopup(widget, event, treeview_update, statusIcon, wTree):
-    if event.button == 3:
-        (model, iter) = widget.get_selection().get_selected()
-        if (iter != None):
-            selected_package = model.get_value(iter, 1)
-            menu = gtk.Menu()                
-            menuItem = gtk.MenuItem(_("Ignore updates for this package"))
-            menuItem.connect("activate", add_to_ignore_list, treeview_update, selected_package, statusIcon, wTree)
-            menu.append(menuItem)        
-            menu.show_all()        
-            menu.popup( None, None, None, 3, 0)
         
 def add_to_ignore_list(widget, treeview_update, pkg, statusIcon, wTree):
     os.system("echo \"%s\" >> /etc/linuxmint/mintupdate.ignored" % pkg)
@@ -1492,7 +1494,6 @@ try:
     statusIcon.set_from_file(icon_busy)
     statusIcon.set_tooltip(_("Checking for updates"))
     statusIcon.set_visible(True)
-    tooltips = gtk.Tooltips()
 
     #Set the Glade file
     gladefile = "/usr/lib/linuxmint/mintUpdate/mintUpdate.glade"
@@ -1564,13 +1565,13 @@ try:
 
     selection = treeview_update.get_selection()
     selection.connect("changed", display_selected_package, wTree)
-    wTree.get_widget("notebook_details").connect("switch-page", switch_page, wTree, treeview_update)
-    wTree.get_widget("window1").connect("delete_event", close_window, wTree.get_widget("vpaned1"))
     wTree.get_widget("tool_clear").connect("clicked", clear, treeview_update, statusbar, context_id)
     wTree.get_widget("tool_select_all").connect("clicked", select_all, treeview_update, statusbar, context_id)
     wTree.get_widget("tool_refresh").connect("clicked", force_refresh, treeview_update, statusIcon, wTree)
     wTree.get_widget("tool_apply").connect("clicked", install, treeview_update, statusIcon, wTree)
     wTree.get_widget("cos_updates").connect("clicked", install, treeview_update, statusIcon, wTree)
+    wTree.get_widget("notebook_details").connect("switch-page", switch_page, wTree, treeview_update)
+    wTree.get_widget("window1").connect("delete_event", close_window, wTree.get_widget("vpaned1"))
 
     menu = gtk.Menu()
     menuItem3 = gtk.ImageMenuItem(gtk.STOCK_REFRESH)
@@ -1586,7 +1587,6 @@ try:
     menuItem = gtk.ImageMenuItem(gtk.STOCK_QUIT)
     menuItem.connect('activate', quit_cb, wTree.get_widget("window1"), wTree.get_widget("vpaned1"), statusIcon)
     menu.append(menuItem)
-
     statusIcon.connect('activate', activate_icon_cb, None, wTree)
     statusIcon.connect('popup-menu', popup_menu_cb, menu)
 
@@ -1596,7 +1596,7 @@ try:
     wTree.get_widget("tool_refresh").set_label(_("Refresh"))
     wTree.get_widget("tool_apply").set_label(_("Install Updates"))
     wTree.get_widget("cos_updates").set_label(_("COS Updates"))
-    tooltips.set_tip(wTree.get_widget("cos_updates"), "Select Packages for COS Updates")
+    wTree.get_widget("cos_updates").set_tooltip_text(_("Select Packages for COS Updates"))
     wTree.get_widget("label9").set_text(_("Description"))
     wTree.get_widget("label8").set_text(_("Changelog"))    
 
