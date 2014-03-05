@@ -14,10 +14,12 @@ try:
     import gettext
     import fnmatch
     import urllib2
+    import copy
     from user import home
     sys.path.append('/usr/lib/linuxmint/common')
     from configobj import ConfigObj
-    from getpkginfo import checkAPT
+    from getpkginfo import checkAPT 
+    from getpkginfo import pkginfodict
 except Exception, detail:
     print detail
     pass
@@ -238,13 +240,14 @@ class RefreshThread(threading.Thread):
             statusbar.push(context_id, _("Finding the list of updates..."))
             wTree.get_widget("vpaned1").set_position(vpaned_position)
             gtk.gdk.threads_leave()
-            pkgs2update = {}
+
             pkgsname = []
             if app_hidden:
-                pkgs2update = checkAPT(False, 0)
+                pkgs2update = copy.deepcopy(checkAPT(False, 0))
             else:
-                pkgs2update = checkAPT(True, self.wTree.get_widget("window1").window.xid)
+                pkgs2update = copy.deepcopy(checkAPT(True, self.wTree.get_widget("window1").window.xid))
             pkgsname = pkgs2update.keys()
+            #print "have get apt info."
 
             # Check return value
             if ("ERROR" in pkgsname):
@@ -315,7 +318,6 @@ class RefreshThread(threading.Thread):
                     oldVersion = pkgs2update[pkg].oldVersion
                     size = int(pkgs2update[pkg].size)
                     description = pkgs2update[pkg].description
-
                     strSize = size_to_string(size)
 
                     level = 3 # Level 3 by default
@@ -432,10 +434,7 @@ class RefreshThread(threading.Thread):
                         statusbar.push(context_id, _("Your system is up to date"))
                         log.writelines("++ System is up to date\n")
                         log.flush()
-            #treeiter = model.get_iter((0,))
-            #print("model value in row %r" % model.get_value(treeiter, 3))
-            #row = model[0]
-            #print("value in row 0:%s", row[3])
+
             log.writelines("++ Refresh finished\n")
             log.flush()
             # Stop the blinking
@@ -1036,7 +1035,7 @@ def select_all(widget, treeView, statusbar, context_id):
         if (checked == "true"):            
             size = model.get_value(iter, 9)
             download_size = download_size + size
-            num_selected = num_selected + 1                                
+            num_selected = num_selected + 1                          
         iter = model.iter_next(iter)
     if num_selected == 0:
         statusbar.push(context_id, _("No updates selected"))
@@ -1052,6 +1051,22 @@ def force_refresh(widget, treeview, statusIcon, wTree):
 def install(widget, treeView, statusIcon, wTree):
     install = InstallThread(treeView, statusIcon, wTree)
     install.start()
+
+def update_cos(widget, treeView, statusIcon, wTree):
+    model = treeView.get_model()
+    iter = model.get_iter_first()
+    num_selected = 0
+    while (iter != None):
+        pkgname = model.get_value(iter, 1)
+        if(pkginfodict[pkgname].origin == "cosdesktop"):
+            model.set_value(iter, 0, "true")
+            num_selected = num_selected + 1
+        else:
+            model.set_value(iter, 0, "false")
+        iter = model.iter_next(iter)
+#    for row in model:
+#        if(pkginfodict[row[1]].origin == "cosdesktop"):
+#            row[0] = "true"
 
 # notebook-setting
 def switch_page(notebook, page, page_num, Wtree, treeView):
@@ -1445,9 +1460,9 @@ global mode
 global pid
 global statusbar
 global context_id
+global pkgs2update
 
 app_hidden = True
-
 gtk.gdk.threads_init()
 
 #parentPid = "0"
@@ -1544,7 +1559,7 @@ try:
     cr.connect("toggled", toggled, treeview_update, statusbar, context_id)
     column1 = gtk.TreeViewColumn(_("Upgrade"), cr)
     column1.set_cell_data_func(cr, celldatafunction_checkbox)
-    column1.set_sort_column_id(5)
+    #column1.set_sort_column_id(5)
     column1.set_resizable(True)
     column2 = gtk.TreeViewColumn(_("Package"), gtk.CellRendererText(), text=1)
     column2.set_sort_column_id(1)
@@ -1584,7 +1599,7 @@ try:
     wTree.get_widget("tool_select_all").connect("clicked", select_all, treeview_update, statusbar, context_id)
     wTree.get_widget("tool_refresh").connect("clicked", force_refresh, treeview_update, statusIcon, wTree)
     wTree.get_widget("tool_apply").connect("clicked", install, treeview_update, statusIcon, wTree)
-    wTree.get_widget("cos_updates").connect("clicked", install, treeview_update, statusIcon, wTree)
+    wTree.get_widget("cos_updates").connect("clicked", update_cos, treeview_update, statusIcon, wTree)
     wTree.get_widget("notebook_details").connect("switch-page", switch_page, wTree, treeview_update)
 
     # menubar-setting
