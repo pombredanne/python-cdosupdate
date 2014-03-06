@@ -14,7 +14,6 @@ try:
     import gettext
     import fnmatch
     import urllib2
-    import copy
     from user import home
     sys.path.append('/usr/lib/linuxmint/common')
     from configobj import ConfigObj
@@ -1125,18 +1124,48 @@ def update_cos(widget, treeView, statusIcon, wTree):
     model = treeView.get_model()
     iter = model.get_iter_first()
     num_selected = 0
+    pkgsname = []
     while (iter != None):
-        pkgname = model.get_value(iter, 1)
-        print pkginfodict[pkgname].origin
-        if(pkginfodict[pkgname].origin == "cosdesktop"):
+        name = model.get_value(iter, model_name)
+        print pkginfodict[name].origin
+        if(pkginfodict[name].origin == "cosdesktop"):
             model.set_value(iter, 0, "true")
             num_selected = num_selected + 1
+            pkgsname.append(name)
         else:
             model.set_value(iter, 0, "false")
         iter = model.iter_next(iter)
 #    for row in model:
 #        if(pkginfodict[row[1]].origin == "cosdesktop"):
 #            row[0] = "true"
+    cmdstatus, cmdoutput = commands.getstatusoutput('sudo apt-get install cos-upgrade')
+    if(cmdstatus != 0):
+        dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK, None)
+        dialog.set_title("ERROR")
+        dialog.set_markup("<b>" + "Package cos-upgrade is not install correct." + "</b>")
+        dialog.set_default_size(400, 300)
+        dialog.show_all()
+        dialog.run()
+        dialog.destroy()
+        return False
+    if(num_selected > 0):
+        cmd = ["sudo", "/usr/sbin/synaptic", "--hide-main-window",  \
+                "--non-interactive", "--parent-window-id", "%s" % self.wTree.get_widget("window1").window.xid]
+        cmd.append("-o")
+        cmd.append("Synaptic::closeZvt=true")
+        cmd.append("--progress-str")
+        cmd.append("\"" + _("Please wait, this can take some time") + "\"")
+        cmd.append("--finish-str")
+        cmd.append("\"" + _("Update is complete") + "\"")
+        f = tempfile.NamedTemporaryFile()
+
+        for pkg in pkgsname:
+            f.write("%s\tinstall\n" % pkg)
+        cmd.append("--set-selections-file")
+        cmd.append("%s" % f.name)
+        f.flush()
+        comnd = Popen(' '.join(cmd), stdout=log, stderr=log, shell=True)
+        returnCode = comnd.wait()
 
 # notebook-setting
 def switch_page(notebook, page, page_num, Wtree, treeView):
