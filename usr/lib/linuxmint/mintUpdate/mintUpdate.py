@@ -175,7 +175,6 @@ class RefreshThread(threading.Thread):
     global icon_error
     global statusbar
     global context_id
-    global pkgs2update
 
     def __init__(self, treeview_update, statusIcon, wTree):
         threading.Thread.__init__(self)
@@ -243,9 +242,9 @@ class RefreshThread(threading.Thread):
 
             pkgsname = []
             if app_hidden:
-                pkgs2update = copy.deepcopy(checkAPT(False, 0))
+                pkgs2update = checkAPT(False, 0)
             else:
-                pkgs2update = copy.deepcopy(checkAPT(True, self.wTree.get_widget("window1").window.xid))
+                pkgs2update = checkAPT(True, self.wTree.get_widget("window1").window.xid)
             pkgsname = pkgs2update.keys()
             #print "have get apt info."
 
@@ -295,7 +294,7 @@ class RefreshThread(threading.Thread):
                     for blacklist_line in blacklist_file:
                         ignored_list.append(blacklist_line.strip())
                     blacklist_file.close()
-                    rulesAll=[]
+                rulesAll=[]
                 if os.path.exists("/usr/lib/linuxmint/mintUpdate/rules"):
                     rulesFile = open("/usr/lib/linuxmint/mintUpdate/rules","r")
                     rulesLine = rulesFile.readlines()
@@ -360,18 +359,18 @@ class RefreshThread(threading.Thread):
                         if (new_mintupdate):
                             if (pkg == "mintupdate"):
                                 iter = model.insert_before(None, None)
-                                model.set_value(iter, 0, "true")
+                                model.set_value(iter, model_check, "true")
                                 model.row_changed(model.get_path(iter), iter)
-                                model.set_value(iter, 1, pkg)
-                                model.set_value(iter, 2, gtk.gdk.pixbuf_new_from_file("/usr/lib/linuxmint/mintUpdate/icons/level" + str(level) + ".png"))
-                                model.set_value(iter, 3, oldVersion)
-                                model.set_value(iter, 4, newVersion)
-                                model.set_value(iter, 5, size)
-                                model.set_value(iter, 6, strSize)
-                                model.set_value(iter, 7, str(level))
-                                model.set_value(iter, 8, description)
-                                model.set_value(iter, 9, warning)
-                                model.set_value(iter, 10, extraInfo)
+                                model.set_value(iter, model_name, pkg)
+                                model.set_value(iter, model_levelpixbuf, gtk.gdk.pixbuf_new_from_file("/usr/lib/linuxmint/mintUpdate/icons/level" + str(level) + ".png"))
+                                model.set_value(iter, model_oldversion, oldVersion)
+                                model.set_value(iter, model_newversion, newVersion)
+                                model.set_value(iter, model_size, size)
+                                model.set_value(iter, model_strsize, strSize)
+                                model.set_value(iter, model_strlevel, str(level))
+                                model.set_value(iter, model_des, description)
+                                model.set_value(iter, model_warning, warning)
+                                model.set_value(iter, model_extrainfo, extraInfo)
                                 #model.set_value(iter, 11, sourcePackage)
                                 num_visible = num_visible + 1
                             #else:
@@ -380,22 +379,22 @@ class RefreshThread(threading.Thread):
                             iter = model.insert_before(None, None)
                             #print "path:", model.get_path(iter)
                             if (prefs["level" + str(level) + "_safe"]):
-                                #model.set_value(iter, 0, "true")
+                                #model.set_value(iter, model_check, "true")
                                 num_safe = num_safe + 1
                                 download_size = download_size + size
                             else:
-                                model.set_value(iter, 0, "false")
+                                model.set_value(iter, model_check, "false")
                             model.row_changed(model.get_path(iter), iter)
-                            model.set_value(iter, 1, pkg)
-                            model.set_value(iter, 2, gtk.gdk.pixbuf_new_from_file("/usr/lib/linuxmint/mintUpdate/icons/level" + str(level) + ".png"))
-                            model.set_value(iter, 3, oldVersion)
-                            model.set_value(iter, 4, newVersion)
-                            model.set_value(iter, 5, size)
-                            model.set_value(iter, 6, strSize)
-                            model.set_value(iter, 7, str(level))
-                            model.set_value(iter, 8, description)
-                            model.set_value(iter, 9, warning)
-                            model.set_value(iter, 10, extraInfo)
+                            model.set_value(iter, model_name, pkg)
+                            model.set_value(iter, model_levelpix, gtk.gdk.pixbuf_new_from_file("/usr/lib/linuxmint/mintUpdate/icons/level" + str(level) + ".png"))
+                            model.set_value(iter, model_oldversion, oldVersion)
+                            model.set_value(iter, model_newversion, newVersion)
+                            model.set_value(iter, model_size, size)
+                            model.set_value(iter, model_strsize, strSize)
+                            model.set_value(iter, model_strlevel, str(level))
+                            model.set_value(iter, model_des, description)
+                            model.set_value(iter, model_warning, warning)
+                            model.set_value(iter, model_extrainfo, extraInfo)
                             #model.set_value(iter, 11, sourcePackage)#
                             num_visible = num_visible + 1
 
@@ -651,11 +650,11 @@ class InstallThread(threading.Thread):
                     log.writelines("++ Install finished\n")
                     log.flush()
 
-                    gtk.gdk.threads_enter()
-                    global app_hidden
-                    app_hidden = True
-                    self.wTree.get_widget("window1").hide()
-                    gtk.gdk.threads_leave()
+                    #gtk.gdk.threads_enter()
+                    #global app_hidden
+                    #app_hidden = True
+                    #self.wTree.get_widget("window1").hide()
+                    #gtk.gdk.threads_leave()
 
                     if "mintupdate" in packages:
                         # Restart
@@ -672,15 +671,18 @@ class InstallThread(threading.Thread):
                         os.system(command)
 
                     else:
-                        # Refresh
-                        gtk.gdk.threads_enter()
-                        self.statusIcon.set_from_file(icon_busy)
-                        self.statusIcon.set_tooltip(_("Checking for updates"))
-                        self.wTree.get_widget("window1").window.set_cursor(None)
-                        self.wTree.get_widget("window1").set_sensitive(True)
-                        gtk.gdk.threads_leave()
-                        refresh = RefreshThread(self.treeView, self.statusIcon, self.wTree)
-                        refresh.start()
+                        if(returnCode == 0):
+                            refresh_status(self.treeView, self.statusIcon, self.wTree, packages)
+                        else:
+                            # Refresh
+                            gtk.gdk.threads_enter()
+                            self.statusIcon.set_from_file(icon_busy)
+                            self.statusIcon.set_tooltip(_("Checking for updates"))
+                            self.wTree.get_widget("window1").window.set_cursor(None)
+                            self.wTree.get_widget("window1").set_sensitive(True)
+                            gtk.gdk.threads_leave()
+                            refresh = RefreshThread(self.treeView, self.statusIcon, self.wTree)
+                            refresh.start()
                 else:
                     # Stop the blinking but don't refresh
                     gtk.gdk.threads_enter()
@@ -817,7 +819,74 @@ def read_configuration():
         prefs["blacklisted_packages"] = []
 
     return prefs
-    
+
+def refresh_status(treeview_update, statusIcon, wTree, pkgs2rm):
+    global icon_updates
+    global statusbar
+    global context_id
+    gtk.gdk.threads_enter()
+    vpaned_position = wTree.get_widget("vpaned1").get_position()
+    gtk.gdk.threads_leave()
+    model = treeview_update.get_model()
+    iter = model.get_iter_first()
+    while (iter != None):
+        name = model.get_value(iter, model_name)
+        if name in pkgs2rm:
+            model.remove(iter)
+            del pkginfodict[name]
+        iter = model.iter_next(iter)
+
+    num_ignored = 0
+    num_safe = 0
+    download_size = 0
+
+    prefs = read_configuration()
+    ignored_list = []
+    if os.path.exists("/etc/linuxmint/mintupdate.ignored"):
+        blacklist_file = open("/etc/linuxmint/mintupdate.ignored", "r")
+        for blacklist_line in blacklist_file:
+            ignored_list.append(blacklist_line.strip())
+        blacklist_file.close()
+
+    iter = model.get_iter_first()
+    while (iter != None):
+        name = model.get_value(iter, model_name)
+        level = model.get_value(iter, model_strlevel)
+        size = model.get_value(iter, model_size)
+        for blacklist in ignored_list:
+            if fnmatch.fnmatch(name, blacklist):
+                num_ignored = num_ignored + 1
+                break
+        if(prefs["level" + str(level) + "_safe"]): 
+            num_safe = num_safe + 1
+            download_size = download_size + size
+        iter = model.iter_next(iter)
+
+    if (num_safe > 0):
+        if (num_safe == 1):
+            if (num_ignored == 0):
+                statusString = _("1 recommended update available (%(size)s)") % {'size':size_to_string(download_size)}
+            elif (num_ignored == 1):
+                statusString = _("1 recommended update available (%(size)s), 1 ignored") % {'size':size_to_string(download_size)}
+            elif (num_ignored > 1):
+                statusString = _("1 recommended update available (%(size)s), %(ignored)d ignored") % {'size':size_to_string(download_size), 'ignored':num_ignored}
+        else:
+            if (num_ignored == 0):
+                statusString = _("%(recommended)d recommended updates available (%(size)s)") % {'recommended':num_safe, 'size':size_to_string(download_size)}
+            elif (num_ignored == 1):
+                statusString = _("%(recommended)d recommended updates available (%(size)s), 1 ignored") % {'recommended':num_safe, 'size':size_to_string(download_size)}
+            elif (num_ignored > 0):
+                statusString = _("%(recommended)d recommended updates available (%(size)s), %(ignored)d ignored") % {'recommended':num_safe, 'size':size_to_string(download_size), 'ignored':num_ignored}
+    gtk.gdk.threads_enter()
+    statusIcon.set_from_file(icon_updates)
+    statusIcon.set_tooltip(statusString)
+    statusbar.push(context_id, statusString)
+    wTree.get_widget("notebook_details").set_current_page(0)
+    wTree.get_widget("window1").window.set_cursor(None)
+    wTree.get_widget("window1").set_sensitive(True)
+    wTree.get_widget("vpaned1").set_position(vpaned_position)
+    gtk.gdk.threads_leave()
+
 def size_to_string(size):
     strSize = str(size) + _("B")
     if (size >= 1024):
@@ -1058,6 +1127,7 @@ def update_cos(widget, treeView, statusIcon, wTree):
     num_selected = 0
     while (iter != None):
         pkgname = model.get_value(iter, 1)
+        print pkginfodict[pkgname].origin
         if(pkginfodict[pkgname].origin == "cosdesktop"):
             model.set_value(iter, 0, "true")
             num_selected = num_selected + 1
@@ -1438,7 +1508,7 @@ def toggled(renderer, path, treeview, statusbar, context_id):
     while (iter != None):
         checked = model.get_value(iter, 0)
         if (checked == "true"):            
-            size = model.get_value(iter, 9)
+            size = model.get_value(iter, model_size)
             download_size = download_size + size
             num_selected = num_selected + 1                                
         iter = model.iter_next(iter)
@@ -1460,7 +1530,6 @@ global mode
 global pid
 global statusbar
 global context_id
-global pkgs2update
 
 app_hidden = True
 gtk.gdk.threads_init()
@@ -1500,6 +1569,29 @@ log.writelines("++ Launching mintUpdate in " + mode + " mode\n")
 log.flush()
 
 try:
+    global model_check
+    global model_name
+    global model_levelpix
+    global model_oldversion
+    global model_newversion
+    global model_size
+    global model_strsize
+    global model_strlevel
+    global model_des
+    global model_warning
+    global model_extrainfo
+    model_check = 0
+    model_name = 1
+    model_levelpix = 2
+    model_oldversion = 3
+    model_newversion = 4
+    model_size = 5
+    model_strsize = 6
+    model_strlevel = 7
+    model_des = 8
+    model_warning = 9
+    model_extrainfo = 10
+
     global icon_busy
     global icon_up2date
     global icon_updates
