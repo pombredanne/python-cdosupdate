@@ -1,0 +1,27 @@
+config:
+{'dimensions': {'x': '790', 'y': '540', 'pane_position': '275'}}
+prefs:
+{'timer_hours': 0, 'ping_domain': 'google.com', 'old_version_column_visible': True, 'dimensions_x': 790, 'dimensions_pane_position': 275, 'level_column_visible': True, 'level5_visible': False, 'level2_safe': True, 'delay': 30, 'blacklisted_packages': [], 'level3_visible': True, 'level2_visible': True, 'new_version_column_visible': True, 'timer_days': 0, 'level1_safe': True, 'dimensions_y': 540, 'level4_safe': False, 'level4_visible': False, 'level1_visible': True, 'package_column_visible': True, 'timer_minutes': 15, 'level3_safe': True, 'dist_upgrade': True, 'level5_safe': False, 'size_column_visible': True}
+
+xifei-Lenovo-Product xifei # dpkg --purge wine-qq2012-longeneteam 
+(正在读取数据库 ... 系统当前共安装有 186575 个文件和目录。)
+正在卸载 wine-qq2012-longeneteam ...
+*	ldconfig....
+sudo： 无法解析主机：xifei-Lenovo-Product
+*	Remove the entry from system menu......
+*	Remove desktop icon......
+正在清除 wine-qq2012-longeneteam 的配置文件 ...
+ls: 无法访问/opt/longene: 没有那个文件或目录
+*	Removing /opt/longene...
+sudo： 无法解析主机：xifei-Lenovo-Product
+*	Done.
+正在处理用于 desktop-file-utils 的触发器...
+正在处理用于 gnome-menus 的触发器...
+
+
+
+COS Updates
+COS更新
+
+Select Packages for COS Updates
+选择与COS更新相关包
