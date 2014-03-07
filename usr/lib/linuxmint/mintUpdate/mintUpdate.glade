@@ -2298,4 +2298,62 @@ Public License instead of this License.
       </widget>
     </child>
   </widget>
+  <widget class="GtkWindow" id="updating_window">
+    <property name="height_request">400</property>
+    <property name="visible">True</property>
+    <property name="title" translatable="yes" context="yes">mintUpdate</property>
+    <property name="modal">True</property>
+    <property name="window_position">center</property>
+    <property name="icon">/usr/lib/linuxmint/mintUpdate/icons/icon.png</property>
+    <child>
+      <widget class="GtkVBox" id="vbox3">
+        <property name="width_request">600</property>
+        <property name="visible">True</property>
+        <property name="border_width">5</property>
+        <property name="spacing">5</property>
+        <child>
+          <widget class="GtkScrolledWindow" id="scrolledwindow6">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="hscrollbar_policy">automatic</property>
+            <property name="vscrollbar_policy">automatic</property>
+            <child>
+              <widget class="GtkTextView" id="updating_textview">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+              </widget>
+            </child>
+          </widget>
+          <packing>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="GtkHButtonBox" id="hbuttonbox2">
+            <property name="visible">True</property>
+            <property name="spacing">15</property>
+            <property name="layout_style">center</property>
+            <child>
+              <widget class="GtkButton" id="button_close">
+                <property name="label" context="yes">gtk-close</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </widget>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </widget>
+          <packing>
+            <property name="expand">False</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </widget>
+    </child>
+  </widget>
 </glade-interface>
