@@ -1720,7 +1720,7 @@ try:
     wTree.get_widget("tool_select_all").connect("clicked", select_all, treeview_update, statusbar, context_id)
     wTree.get_widget("tool_refresh").connect("clicked", force_refresh, treeview_update, statusIcon, wTree)
     wTree.get_widget("tool_apply").connect("clicked", install, treeview_update, statusIcon, wTree)
-    wTree.get_widget("cos_updates").connect("clicked", update_cos, treeview_update, statusIcon, wTree)
+    wTree.get_widget("update_cos").connect("clicked", update_cos, treeview_update, statusIcon, wTree)
     wTree.get_widget("notebook_details").connect("switch-page", switch_page, wTree, treeview_update)
 
     # menubar-setting
@@ -1815,8 +1815,8 @@ try:
     wTree.get_widget("tool_select_all").set_label(_("Select All"))
     wTree.get_widget("tool_refresh").set_label(_("Refresh"))
     wTree.get_widget("tool_apply").set_label(_("Install Updates"))
-    wTree.get_widget("cos_updates").set_label(_("COS Updates"))
-    wTree.get_widget("cos_updates").set_tooltip_text(_("Select Packages for COS Updates"))
+    wTree.get_widget("update_cos").set_label(_("COS Updates"))
+    wTree.get_widget("update_cos").set_tooltip_text(_("Select Packages for COS Updates"))
     wTree.get_widget("label9").set_text(_("Description"))
     wTree.get_widget("label8").set_text(_("Changelog"))
     wTree.get_widget("label_error_detail").set_text("")

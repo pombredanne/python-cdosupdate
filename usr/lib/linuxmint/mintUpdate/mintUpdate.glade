@@ -71,9 +71,9 @@
                   </packing>
                 </child>
                 <child>
-                  <widget class="GtkToolButton" id="tool_apply">
+                  <widget class="GtkToolButton" id="update_cos">
                     <property name="visible">True</property>
-                    <property name="stock_id">gtk-apply</property>
+                    <property name="stock_id">gtk-sort-descending</property>
                   </widget>
                   <packing>
                     <property name="expand">False</property>
@@ -90,9 +90,9 @@
                   </packing>
                 </child>
                 <child>
-                  <widget class="GtkToolButton" id="cos_updates">
+                  <widget class="GtkToolButton" id="tool_apply">
                     <property name="visible">True</property>
-                    <property name="stock_id">gtk-sort-descending</property>
+                    <property name="stock_id">gtk-apply</property>
                   </widget>
                   <packing>
                     <property name="expand">False</property>
