@@ -17,8 +17,8 @@ try:
     from user import home
     sys.path.append('/usr/lib/linuxmint/common')
     from configobj import ConfigObj
-    from getpkginfo import checkAPT 
-    from getpkginfo import pkginfodict
+    from getPackagesInfo import checkAPT 
+    from getPackagesInfo import pkginfodict
 except Exception, detail:
     print detail
     pass
@@ -269,7 +269,7 @@ class RefreshThread(threading.Thread):
                 gtk.gdk.threads_leave()
                 return False
             # Check value and Look for mintupdate
-            if ("cosupdate" in pkgsname):               
+            if ("cdosupdate" in pkgsname):               
                 new_mintupdate = True
             else:
                 new_mintupdate = False
@@ -1120,7 +1120,7 @@ def install(widget, treeView, statusIcon, wTree):
     install = InstallThread(treeView, statusIcon, wTree)
     install.start()
 
-def update_cos(widget, treeView, statusIcon, wTree):
+def update_cdos(widget, treeView, statusIcon, wTree):
     model = treeView.get_model()
     iter = model.get_iter_first()
     num_selected = 0
@@ -1138,11 +1138,11 @@ def update_cos(widget, treeView, statusIcon, wTree):
 #    for row in model:
 #        if(pkginfodict[row[1]].origin == "cosdesktop"):
 #            row[0] = "true"
-    cmdstatus, cmdoutput = commands.getstatusoutput('sudo apt-get install cos-upgrade')
+    cmdstatus, cmdoutput = commands.getstatusoutput('sudo apt-get install cdos-upgrade')
     if(cmdstatus != 0):
         dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK, None)
         dialog.set_title("ERROR")
-        dialog.set_markup("<b>" + "Package cos-upgrade is not install correct.\nContact us: cos_ibp@iscas.ac.cn" + "</b>")
+        dialog.set_markup("<b>" + "Package cdos-upgrade is not install correct.\nContact us: cdos_ibp@iscas.ac.cn" + "</b>")
         dialog.set_default_size(400, 300)
         dialog.show_all()
         dialog.run()
@@ -1720,7 +1720,7 @@ try:
     wTree.get_widget("tool_select_all").connect("clicked", select_all, treeview_update, statusbar, context_id)
     wTree.get_widget("tool_refresh").connect("clicked", force_refresh, treeview_update, statusIcon, wTree)
     wTree.get_widget("tool_apply").connect("clicked", install, treeview_update, statusIcon, wTree)
-    wTree.get_widget("update_cos").connect("clicked", update_cos, treeview_update, statusIcon, wTree)
+    wTree.get_widget("update_cdos").connect("clicked", update_cdos, treeview_update, statusIcon, wTree)
     wTree.get_widget("notebook_details").connect("switch-page", switch_page, wTree, treeview_update)
 
     # menubar-setting
@@ -1815,8 +1815,8 @@ try:
     wTree.get_widget("tool_select_all").set_label(_("Select All"))
     wTree.get_widget("tool_refresh").set_label(_("Refresh"))
     wTree.get_widget("tool_apply").set_label(_("Install Updates"))
-    wTree.get_widget("update_cos").set_label(_("COS Updates"))
-    wTree.get_widget("update_cos").set_tooltip_text(_("Select Packages for COS Updates"))
+    wTree.get_widget("update_cdos").set_label(_("CDOS Updates"))
+    wTree.get_widget("update_cdos").set_tooltip_text(_("Select Packages for CDOS Updates"))
     wTree.get_widget("label9").set_text(_("Description"))
     wTree.get_widget("label8").set_text(_("Changelog"))
     wTree.get_widget("label_error_detail").set_text("")

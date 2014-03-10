@@ -71,7 +71,7 @@
                   </packing>
                 </child>
                 <child>
-                  <widget class="GtkToolButton" id="update_cos">
+                  <widget class="GtkToolButton" id="update_cdos">
                     <property name="visible">True</property>
                     <property name="stock_id">gtk-sort-descending</property>
                   </widget>
