@@ -8,8 +8,9 @@ class pkginfo():
     pass
 
 
+pkginfodict={}
 def checkAPT(use_synaptic, window_id):
-    pkginfodict={}
+#    pkginfodict={}
     try:
         cache = apt.Cache()
         
@@ -20,7 +21,6 @@ def checkAPT(use_synaptic, window_id):
 #                    use_synaptic = True
 
             if use_synaptic:
-#                window_id = sys.argv[2]
                 from subprocess import Popen, PIPE
                 cmd = ["sudo", "/usr/sbin/synaptic", "--hide-main-window", "--update-at-startup", "--non-interactive", "--parent-window-id", "%s" % window_id]
                 #cmd.append("--progress-str")
@@ -46,6 +46,7 @@ def checkAPT(use_synaptic, window_id):
         cache.open(None)
         cache.upgrade(dist_upgrade)
         changes = cache.get_changes()
+        #print "length of changes:", len(changes)
         
         # Add dependencies
         #changes = checkDependencies(changes, cache)
