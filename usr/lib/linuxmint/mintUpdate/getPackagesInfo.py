@@ -3,12 +3,13 @@
 import os
 import sys
 import apt
+from globalParameter import *
 
 class pkginfo():
     pass
 
 
-pkginfodict={}
+#pkginfodict={}
 def checkAPT(use_synaptic, window_id):
 #    pkginfodict={}
     try:

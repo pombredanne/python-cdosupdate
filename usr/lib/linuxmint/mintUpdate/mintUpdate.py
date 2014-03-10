@@ -18,7 +18,9 @@ try:
     sys.path.append('/usr/lib/linuxmint/common')
     from configobj import ConfigObj
     from getPackagesInfo import checkAPT 
-    from getPackagesInfo import pkginfodict
+#    from getPackagesInfo import pkginfodict
+    from updateCDOS import update_cdos
+    from globalParameter import *
 except Exception, detail:
     print detail
     pass
@@ -1120,52 +1122,31 @@ def install(widget, treeView, statusIcon, wTree):
     install = InstallThread(treeView, statusIcon, wTree)
     install.start()
 
-def update_cdos(widget, treeView, statusIcon, wTree):
-    model = treeView.get_model()
-    iter = model.get_iter_first()
-    num_selected = 0
-    pkgsname = []
-    while (iter != None):
-        name = model.get_value(iter, model_name)
-        print pkginfodict[name].origin
-        if(pkginfodict[name].origin == "cosdesktop"):
-            model.set_value(iter, 0, "true")
-            num_selected = num_selected + 1
-            pkgsname.append(name)
-        else:
-            model.set_value(iter, 0, "false")
-        iter = model.iter_next(iter)
-#    for row in model:
-#        if(pkginfodict[row[1]].origin == "cosdesktop"):
-#            row[0] = "true"
-    cmdstatus, cmdoutput = commands.getstatusoutput('sudo apt-get install cdos-upgrade')
-    if(cmdstatus != 0):
-        dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK, None)
-        dialog.set_title("ERROR")
-        dialog.set_markup("<b>" + "Package cdos-upgrade is not install correct.\nContact us: cdos_ibp@iscas.ac.cn" + "</b>")
-        dialog.set_default_size(400, 300)
-        dialog.show_all()
-        dialog.run()
-        dialog.destroy()
-        return False
-#    if(num_selected > 0):
-#        cmd = ["sudo", "/usr/sbin/synaptic", "--hide-main-window",  \
-#                "--non-interactive", "--parent-window-id", "%s" % self.wTree.get_widget("window1").window.xid]
-#        cmd.append("-o")
-#        cmd.append("Synaptic::closeZvt=true")
-#        cmd.append("--progress-str")
-#        cmd.append("\"" + _("Please wait, this can take some time") + "\"")
-#        cmd.append("--finish-str")
-#        cmd.append("\"" + _("Update is complete") + "\"")
-#        f = tempfile.NamedTemporaryFile()
-#
-#        for pkg in pkgsname:
-#            f.write("%s\tinstall\n" % pkg)
-#        cmd.append("--set-selections-file")
-#        cmd.append("%s" % f.name)
-#        f.flush()
-#        comnd = Popen(' '.join(cmd), stdout=log, stderr=log, shell=True)
-#        returnCode = comnd.wait()
+#def update_cdos(widget, treeView, statusIcon, wTree):
+#    model = treeView.get_model()
+#    iter = model.get_iter_first()
+#    num_selected = 0
+#    pkgsname = []
+#    while (iter != None):
+#        name = model.get_value(iter, model_name)
+#        print pkginfodict[name].origin
+#        if(pkginfodict[name].origin == "cosdesktop"):
+#            model.set_value(iter, 0, "true")
+#            num_selected = num_selected + 1
+#            pkgsname.append(name)
+#        else:
+#            model.set_value(iter, 0, "false")
+#        iter = model.iter_next(iter)
+#    cmdstatus, cmdoutput = commands.getstatusoutput('sudo apt-get install cdos-upgrade')
+#    if(cmdstatus != 0):
+#        dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK, None)
+#        dialog.set_title("ERROR")
+#        dialog.set_markup("<b>" + "Package cdos-upgrade is not install correct.\nContact us: cdos_ibp@iscas.ac.cn" + "</b>")
+#        dialog.set_default_size(400, 300)
+#        dialog.show_all()
+#        dialog.run()
+#        dialog.destroy()
+#        return False
 
 # notebook-setting
 def switch_page(notebook, page, page_num, Wtree, treeView):
@@ -1598,28 +1579,28 @@ log.writelines("++ Launching mintUpdate in " + mode + " mode\n")
 log.flush()
 
 try:
-    global model_check
-    global model_name
-    global model_levelpix
-    global model_oldversion
-    global model_newversion
-    global model_size
-    global model_strsize
-    global model_strlevel
-    global model_des
-    global model_warning
-    global model_extrainfo
-    model_check = 0
-    model_name = 1
-    model_levelpix = 2
-    model_oldversion = 3
-    model_newversion = 4
-    model_size = 5
-    model_strsize = 6
-    model_strlevel = 7
-    model_des = 8
-    model_warning = 9
-    model_extrainfo = 10
+#    global model_check
+#    global model_name
+#    global model_levelpix
+#    global model_oldversion
+#    global model_newversion
+#    global model_size
+#    global model_strsize
+#    global model_strlevel
+#    global model_des
+#    global model_warning
+#    global model_extrainfo
+#    model_check = 0
+#    model_name = 1
+#    model_levelpix = 2
+#    model_oldversion = 3
+#    model_newversion = 4
+#    model_size = 5
+#    model_strsize = 6
+#    model_strlevel = 7
+#    model_des = 8
+#    model_warning = 9
+#    model_extrainfo = 10
 
     global icon_busy
     global icon_up2date
