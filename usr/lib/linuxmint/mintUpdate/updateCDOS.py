@@ -11,11 +11,12 @@ from globalParameter import *
 gtk.gdk.threads_init()
 
 class ChooseVBox(gtk.VBox):
-    def __init__(self, w, h):
+    def __init__(self, w, h, m):
         gtk.VBox.__init__(self)
         self.set_size_request(w, h)
         self.pack()
-
+        self.main = m
+        
     def celldatafunction_checkbox(self, column, cell, model, iter):
         cell.set_property("activatable", True)
         checked = model.get_value(iter, 0)
@@ -45,14 +46,14 @@ class ChooseVBox(gtk.VBox):
                 operations.append(model.get_value(iter, 1))
             iter = model.iter_next(iter)
         print "Your selection:", operations
-        t = threading.Thread(target=redirect_vbox)
+        t = threading.Thread(target=self.main.redirect_vbox)
         t.start()
 
     def btn_cancel_clicked(self, button):
         print button.get_label()
-        window.hide()
-        pid = os.getpid()    
-        os.system("kill -9 %s &" % pid)
+        self.main.window.hide()
+        #pid = os.getpid()    
+        #os.system("kill -9 %s &" % pid)
 
     def pack(self):
         label = gtk.Label()
@@ -100,11 +101,12 @@ class ChooseVBox(gtk.VBox):
 
 
 class ProcessVBox(gtk.VBox):
-    def __init__(self, w, h):
+    def __init__(self, w, h, m):
         gtk.VBox.__init__(self)
         self.text = 0
         self.set_size_request(w, h)
         self.pack()
+        self.main = m
     def thread2refresh_textbuf(self, textview):
         textbuf = textview.get_buffer()
         while self.text < 40:
@@ -121,8 +123,9 @@ class ProcessVBox(gtk.VBox):
         t.start()     
     def btn_cancel_clicked(self, button):
         print button.get_label()
-        pid = os.getpid()    
-        os.system("kill -9 %s &" % pid)
+        self.main.window.hide()
+        #pid = os.getpid()    
+        #os.system("kill -9 %s &" % pid)
     def pack(self):
         label = gtk.Label()
         label.set_markup("<b>Status output:</b>")
@@ -150,63 +153,65 @@ class ProcessVBox(gtk.VBox):
         self.pack_start(scrolledWindow, True, True, 0)
         self.pack_start(hbuttonbox, False, False, 5)
 
-global fix
-global choose_x
-global process_x
-global vbox_choose
-global vbox_process
-global width
-global height
+class MainWindow():
+    def __init__(self):
+        self.width = 600
+        self.height = 400
+        self.choose_x = 0
+        self.process_x = self.width
+        self.fix = gtk.Fixed()
+        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.window.set_title("Update")
+        self.window.set_icon_from_file("/usr/lib/linuxmint/mintUpdate/icons/base.svg")
+        self.window.set_default_size(self.width, self.height)
+        self.window.set_geometry_hints(self.window, self.width, self.height, self.width, self.height)
+        self.window.set_position(gtk.WIN_POS_CENTER)
+        self.vbox_choose = ChooseVBox(self.width, self.height, self)
+        #self.vbox_choose.set_main(self)
+        self.vbox_process = ProcessVBox(self.width, self.height, self)
 
-def redirect_vbox():
-    global fix
-    global choose_x
-    global process_x
-    global vbox_choose
-    global vbox_process
-    global width
-    global height
+#    global fix
+#    global choose_x
+#    global process_x
+#    global vbox_choose
+#    global vbox_process
+#    global width
+#    global height
 
-    step = 120
-    while(process_x > 0):
-        choose_x = choose_x - step
-        process_x = process_x - step
-        gtk.gdk.threads_enter()
-        fix.move(vbox_choose, choose_x, 0)
-        fix.move(vbox_process, process_x, 0)
-        gtk.gdk.threads_leave()
-        time.sleep(0.1)
-        #print choose_x, process_x
-    if(process_x < 0):
-        choose_x = -1 * width
-        process_x = 0
-        gtk.gdk.threads_enter()
-        fix.move(vbox_choose, choose_x, 0)
-        fix.move(vbox_process, process_x, 0)
-        gtk.gdk.threads_leave()
-        
-def openWindow():
-    width = 600
-    height = 400
-    choose_x = 0
-    process_x = width
+    def redirect_vbox(self):
+#        global fix
+#        global choose_x
+#        global process_x
+#        global vbox_choose
+#        global vbox_process
+#        global width
+#        global height
+        step = 200
+        while(self.process_x > 0):
+            self.choose_x = self.choose_x - step
+            self.process_x = self.process_x - step
+            gtk.gdk.threads_enter()
+            self.fix.move(self.vbox_choose, self.choose_x, 0)
+            self.fix.move(self.vbox_process, self.process_x, 0)
+            gtk.gdk.threads_leave()
+            time.sleep(0.1)
+            #print choose_x, process_x
+        if(self.process_x < 0):
+            self.choose_x = -1 * self.width
+            self.process_x = 0
+            gtk.gdk.threads_enter()
+            self.fix.move(self.vbox_choose, self.choose_x, 0)
+            self.fix.move(self.vbox_process, self.process_x, 0)
+            gtk.gdk.threads_leave()
+            
+    def openWindow(self):
+        self.fix.put(self.vbox_process, self.process_x, 0)
+        self.fix.put(self.vbox_choose, self.choose_x, 0)
+        self.fix.show()
 
-    vbox_choose = ChooseVBox(width, height)
-    vbox_process = ProcessVBox(width, height)
-    fix = gtk.Fixed()
-    fix.put(vbox_process, process_x, 0)
-    fix.put(vbox_choose, choose_x, 0)
-    fix.show()
-
-    window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-    window.set_title("Update")
-    window.set_icon_from_file("/usr/lib/linuxmint/mintUpdate/icons/base.svg")
-    window.set_default_size(width, height)
-    window.set_geometry_hints(window, width, height, width, height)
-    window.set_position(gtk.WIN_POS_CENTER)
-    window.add(fix)
-    window.show_all()
-    #gtk.main()
+        self.window.add(self.fix)
+        self.window.show_all()
+        gtk.main()
 
 
 def update_cdos(widget, treeView, statusIcon, wTree):
@@ -216,7 +221,7 @@ def update_cdos(widget, treeView, statusIcon, wTree):
     pkgsname = []
     while (iter != None):
         name = model.get_value(iter, model_name)
-        print pkginfodict[name].origin
+        #print pkginfodict[name].origin
         if(pkginfodict[name].origin == "cosdesktop"):
             model.set_value(iter, 0, "true")
             num_selected = num_selected + 1
@@ -224,19 +229,23 @@ def update_cdos(widget, treeView, statusIcon, wTree):
         else:
             model.set_value(iter, 0, "false")
         iter = model.iter_next(iter)
+    main = MainWindow()
+    main.openWindow()
 #    for row in model:
 #        if(pkginfodict[row[1]].origin == "cosdesktop"):
 #            row[0] = "true"
-    cmdstatus, cmdoutput = commands.getstatusoutput('sudo apt-get install cos-upgrade')
-    if(cmdstatus != 0):
-        dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK, None)
-        dialog.set_title("ERROR")
-        dialog.set_markup("<b>" + "Package cos-upgrade is not install correct." + "</b>")
-        dialog.set_default_size(400, 300)
-        dialog.show_all()
-        dialog.run()
-        dialog.destroy()
-        return False
+
+#    cmdstatus, cmdoutput = commands.getstatusoutput('sudo apt-get install cos-upgrade')
+#    if(cmdstatus != 0):
+#        dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK, None)
+#        dialog.set_title("ERROR")
+#        dialog.set_markup("<b>" + "Package cos-upgrade is not install correct." + "</b>")
+#        dialog.set_default_size(400, 300)
+#        dialog.show_all()
+#        dialog.run()
+#        dialog.destroy()
+#        return False
+
 #    if(num_selected > 0):
 #        cmd = ["sudo", "/usr/sbin/synaptic", "--hide-main-window",  \
 #                "--non-interactive", "--parent-window-id", "%s" % self.wTree.get_widget("window1").window.xid]
