@@ -1142,30 +1142,30 @@ def update_cos(widget, treeView, statusIcon, wTree):
     if(cmdstatus != 0):
         dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK, None)
         dialog.set_title("ERROR")
-        dialog.set_markup("<b>" + "Package cos-upgrade is not install correct." + "</b>")
+        dialog.set_markup("<b>" + "Package cos-upgrade is not install correct.\nContact us: cos_ibp@iscas.ac.cn" + "</b>")
         dialog.set_default_size(400, 300)
         dialog.show_all()
         dialog.run()
         dialog.destroy()
         return False
-    if(num_selected > 0):
-        cmd = ["sudo", "/usr/sbin/synaptic", "--hide-main-window",  \
-                "--non-interactive", "--parent-window-id", "%s" % self.wTree.get_widget("window1").window.xid]
-        cmd.append("-o")
-        cmd.append("Synaptic::closeZvt=true")
-        cmd.append("--progress-str")
-        cmd.append("\"" + _("Please wait, this can take some time") + "\"")
-        cmd.append("--finish-str")
-        cmd.append("\"" + _("Update is complete") + "\"")
-        f = tempfile.NamedTemporaryFile()
-
-        for pkg in pkgsname:
-            f.write("%s\tinstall\n" % pkg)
-        cmd.append("--set-selections-file")
-        cmd.append("%s" % f.name)
-        f.flush()
-        comnd = Popen(' '.join(cmd), stdout=log, stderr=log, shell=True)
-        returnCode = comnd.wait()
+#    if(num_selected > 0):
+#        cmd = ["sudo", "/usr/sbin/synaptic", "--hide-main-window",  \
+#                "--non-interactive", "--parent-window-id", "%s" % self.wTree.get_widget("window1").window.xid]
+#        cmd.append("-o")
+#        cmd.append("Synaptic::closeZvt=true")
+#        cmd.append("--progress-str")
+#        cmd.append("\"" + _("Please wait, this can take some time") + "\"")
+#        cmd.append("--finish-str")
+#        cmd.append("\"" + _("Update is complete") + "\"")
+#        f = tempfile.NamedTemporaryFile()
+#
+#        for pkg in pkgsname:
+#            f.write("%s\tinstall\n" % pkg)
+#        cmd.append("--set-selections-file")
+#        cmd.append("%s" % f.name)
+#        f.flush()
+#        comnd = Popen(' '.join(cmd), stdout=log, stderr=log, shell=True)
+#        returnCode = comnd.wait()
 
 # notebook-setting
 def switch_page(notebook, page, page_num, Wtree, treeView):
