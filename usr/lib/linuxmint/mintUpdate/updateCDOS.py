@@ -38,7 +38,7 @@ class ChooseVBox(gtk.VBox):
                 model.set_value(iter, 0, "true")    
 
     def btn_accept_clicked(self, button, treeview):
-        print button.get_label()
+        #print button.get_label()
         model = treeview.get_model()
         iter = model.get_iter_first()
         funcnames = []
@@ -47,7 +47,7 @@ class ChooseVBox(gtk.VBox):
             if (checked == "true"):
                 funcnames.append(model.get_value(iter, 1))
             iter = model.iter_next(iter)
-        print "Your selection:", funcnames
+        #print "Your selection:", funcnames
         t = threading.Thread(target=self.main.redirect2process, args=(funcnames,))
         t.start()
 
@@ -122,24 +122,28 @@ class ProcessVBox(gtk.VBox):
         self.hbuttonbox = gtk.HButtonBox()
         self.tmpfile="/tmp/cdos-upgrade"
         self.pack()
-    def refresh_textbuf(self):
-        popen = subprocess.Popen(['sudo', 'apt-get', 'install', 'cos-info'], stdout = subprocess.PIPE)
-        out = popen.communicate()[0]
-        print out
-        gtk.gdk.threads_enter()
-        self.textbuf.insert_at_cursor(out)
-        end_mark = self.textbuf.get_insert()
-        self.textview.scroll_to_mark(end_mark, 0.0)
-        gtk.gdk.threads_leave()
+    def refresh_textbuf(self, shellfuncs):
+        global pkgs2update
+        if(len(pkgs2update) > 0):
+            pkgs = ' '.join(str(pkg) for pkg in pkgs2update)
+            popen = subprocess.Popen(['sudo', 'apt-get', 'install', pkgs], stdout = subprocess.PIPE)
+            out = popen.communicate()[0]
+            gtk.gdk.threads_enter()
+            self.textbuf.insert_at_cursor(out)
+            end_mark = self.textbuf.get_insert()
+            self.textview.scroll_to_mark(end_mark, 0.0)
+            gtk.gdk.threads_leave()
+
+        for func in shellfuncs:
+            popen = subprocess.Popen(['cdos-upgrade', '--set-steps', func], stdout = subprocess.PIPE)
+            out = popen.communicate()[0]
+            gtk.gdk.threads_enter()
+            self.textbuf.insert_at_cursor(out)
+            end_mark = self.textbuf.get_insert()
+            self.textview.scroll_to_mark(end_mark, 0.0)
+            gtk.gdk.threads_leave()
         self.hbuttonbox.set_sensitive(True)
-#        while self.text < 40:
-#            self.text = self.text + 1
-#            print "text:", self.text
-#            gtk.gdk.threads_enter()
-#            self.textbuf.insert_at_cursor(("%s%d\n" % (u"你好，世界～", self.text)))
-#            end_mark = self.textbuf.get_insert()
-#            self.textview.scroll_to_mark(end_mark, 0.0)
-#            gtk.gdk.threads_leave()
+
     def btn_accept_clicked(self, button):
         print button.get_label()
         t = threading.Thread(target=self.refresh_textbuf)
@@ -173,7 +177,7 @@ class ProcessVBox(gtk.VBox):
         self.hbuttonbox.set_sensitive(False)
 
     def start_process(self, funcnames):
-        t = threading.Thread(target=self.refresh_textbuf)
+        t = threading.Thread(target=self.refresh_textbuf, args=(funcnames,))
         t.start()   
         print "in start process."  
 
@@ -194,22 +198,7 @@ class MainWindow():
         #self.vbox_choose.set_main(self)
         self.vbox_process = ProcessVBox(self.width, self.height, self)
 
-#    global fix
-#    global choose_x
-#    global process_x
-#    global vbox_choose
-#    global vbox_process
-#    global width
-#    global height
-
     def redirect2process(self, funcnames):
-#        global fix
-#        global choose_x
-#        global process_x
-#        global vbox_choose
-#        global vbox_process
-#        global width
-#        global height
         step = 200
         while(self.process_x > 0):
             self.choose_x = self.choose_x - step
@@ -238,6 +227,9 @@ class MainWindow():
         self.window.show_all()
         gtk.main()
 
+global pkgs2update
+pkgs2update = ['cos-info']
+
 def error_dialog(message):
     dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK, None)
     dialog.set_title("ERROR")
@@ -257,17 +249,17 @@ def test():
     else:
         error_dialog("Command(cdos-upgrade --check) fail")
 def update_cdos(widget, treeView, statusIcon, wTree):
+    global pkgs2update
     model = treeView.get_model()
     iter = model.get_iter_first()
     num_selected = 0
-    pkgsname = []
     while (iter != None):
         name = model.get_value(iter, model_name)
         #print pkginfodict[name].origin
         if(pkginfodict[name].origin == "cosdesktop"):
             model.set_value(iter, 0, "true")
             num_selected = num_selected + 1
-            pkgsname.append(name)
+            pkgs2update.append(name)
         else:
             model.set_value(iter, 0, "false")
         iter = model.iter_next(iter)
