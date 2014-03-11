@@ -7,6 +7,8 @@ import time
 import threading
 import gobject
 import os
+import commands
+import itertools
 from globalParameter import *
 gtk.gdk.threads_init()
 
@@ -39,14 +41,14 @@ class ChooseVBox(gtk.VBox):
         print button.get_label()
         model = treeview.get_model()
         iter = model.get_iter_first()
-        operations = []
+        funcnames = []
         while (iter != None):
             checked = model.get_value(iter, 0)
             if (checked == "true"):
-                operations.append(model.get_value(iter, 1))
+                funcnames.append(model.get_value(iter, 1))
             iter = model.iter_next(iter)
-        print "Your selection:", operations
-        t = threading.Thread(target=self.main.redirect_vbox)
+        print "Your selection:", funcnames
+        t = threading.Thread(target=self.main.redirect2process, args=(funcnames,))
         t.start()
 
     def btn_cancel_clicked(self, button):
@@ -65,17 +67,17 @@ class ChooseVBox(gtk.VBox):
         cr.connect("toggled", self.toggled, self.treeview_choose)
         column1 = gtk.TreeViewColumn("Order", cr)
         column1.set_cell_data_func(cr, self.celldatafunction_checkbox)
-        column2 = gtk.TreeViewColumn("Description", gtk.CellRendererText(), text=1)
-        column2.set_sort_column_id(1)
+        column2 = gtk.TreeViewColumn("Description", gtk.CellRendererText(), text=2)
+        #column2.set_sort_column_id(1)
         column2.set_resizable(True)
         self.treeview_choose.append_column(column1)
         self.treeview_choose.append_column(column2)
-        operations = ['aaa', 'bbb', 'ccc', 'ddd', 'eee', 'fff']
-        model = gtk.TreeStore(str, str)
-        for oper in operations:
-            iter = model.insert_before(None, None)
-            model.set_value(iter, 0, "true")
-            model.set_value(iter, 1, oper)
+        #operations = ['aaa', 'bbb', 'ccc', 'ddd', 'eee', 'fff']
+        model = gtk.TreeStore(str, str, str)
+        #for oper in operations:
+        #    iter = model.insert_before(None, None)
+        #    model.set_value(iter, 0, "true")
+        #    model.set_value(iter, 1, oper)
         self.treeview_choose.set_model(model)
         self.treeview_choose.set_headers_clickable(False)
         self.treeview_choose.set_reorderable(False)
@@ -98,30 +100,51 @@ class ChooseVBox(gtk.VBox):
         self.pack_start(label, False, False, 10)
         self.pack_start(scrolledWindow, True, True, 0)
         self.pack_start(hbuttonbox, False, False, 5)
+    def refresh_treeview(self, names, descs):
+        model = self.treeview_choose.get_model()
+        for name,desc in itertools.izip(names, descs):
+            iter = model.insert_before(None, None)
+            model.set_value(iter, 0, "true")
+            model.set_value(iter, 1, name)
+            model.set_value(iter, 2, desc)
+            print name, desc
 
 
 class ProcessVBox(gtk.VBox):
     def __init__(self, w, h, m):
         gtk.VBox.__init__(self)
         self.text = 0
-        self.set_size_request(w, h)
-        self.pack()
         self.main = m
-    def thread2refresh_textbuf(self, textview):
-        textbuf = textview.get_buffer()
-        while self.text < 40:
-            self.text = self.text + 1
-            print "text:", self.text
-            gtk.gdk.threads_enter()
-            textbuf.insert_at_cursor(("%s%d\n" % (u"你好，世界～", self.text)))
-            end_mark = textbuf.get_insert()
-            textview.scroll_to_mark(end_mark, 0.0)
-            gtk.gdk.threads_leave()
-    def btn_accept_clicked(self, button, textview):
+        self.set_size_request(w, h)
+        self.textview = gtk.TextView()
+        self.textbuf = gtk.TextBuffer()
+        self.textview.set_buffer(self.textbuf)
+        self.hbuttonbox = gtk.HButtonBox()
+        self.tmpfile="/tmp/cdos-upgrade"
+        self.pack()
+    def refresh_textbuf(self):
+        popen = subprocess.Popen(['sudo', 'apt-get', 'install', 'cos-info'], stdout = subprocess.PIPE)
+        out = popen.communicate()[0]
+        print out
+        gtk.gdk.threads_enter()
+        self.textbuf.insert_at_cursor(out)
+        end_mark = self.textbuf.get_insert()
+        self.textview.scroll_to_mark(end_mark, 0.0)
+        gtk.gdk.threads_leave()
+        self.hbuttonbox.set_sensitive(True)
+#        while self.text < 40:
+#            self.text = self.text + 1
+#            print "text:", self.text
+#            gtk.gdk.threads_enter()
+#            self.textbuf.insert_at_cursor(("%s%d\n" % (u"你好，世界～", self.text)))
+#            end_mark = self.textbuf.get_insert()
+#            self.textview.scroll_to_mark(end_mark, 0.0)
+#            gtk.gdk.threads_leave()
+    def btn_accept_clicked(self, button):
         print button.get_label()
-        t = threading.Thread(target=self.thread2refresh_textbuf, args=(textview,))
+        t = threading.Thread(target=self.refresh_textbuf)
         t.start()     
-    def btn_cancel_clicked(self, button):
+    def btn_close_clicked(self, button):
         print button.get_label()
         self.main.window.hide()
         #pid = os.getpid()    
@@ -133,25 +156,26 @@ class ProcessVBox(gtk.VBox):
         scrolledWindow = gtk.ScrolledWindow()
         scrolledWindow.set_shadow_type(gtk.SHADOW_IN)
         scrolledWindow.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        textview = gtk.TextView()
-        textbuf = gtk.TextBuffer()
-        textview.set_buffer(textbuf)
-        textbuf.set_text("hello, world.")
-        scrolledWindow.add(textview)
+        scrolledWindow.add(self.textview)
 
-        hbuttonbox = gtk.HButtonBox()
-        hbuttonbox.set_spacing(50)
-        hbuttonbox.set_layout(gtk.BUTTONBOX_CENTER)
-        btn_accept = gtk.Button("accept")
-        btn_accept.connect("clicked", self.btn_accept_clicked, textview)
-        btn_cancel = gtk.Button("cancel")
-        btn_cancel.connect("clicked", self.btn_cancel_clicked)
-        hbuttonbox.pack_start(btn_accept)
-        hbuttonbox.pack_end(btn_cancel)
+        self.hbuttonbox.set_spacing(50)
+        self.hbuttonbox.set_layout(gtk.BUTTONBOX_CENTER)
+        #btn_accept = gtk.Button("accept")
+        #btn_accept.connect("clicked", self.btn_accept_clicked)
+        btn_close = gtk.Button("close")
+        btn_close.connect("clicked", self.btn_close_clicked)
+        self.hbuttonbox.pack_start(btn_close)
+        #hbuttonbox.pack_end(btn_cancel)
 
         self.pack_start(label, False, False, 10)
         self.pack_start(scrolledWindow, True, True, 0)
-        self.pack_start(hbuttonbox, False, False, 5)
+        self.pack_start(self.hbuttonbox, False, False, 5)
+        self.hbuttonbox.set_sensitive(False)
+
+    def start_process(self, funcnames):
+        t = threading.Thread(target=self.refresh_textbuf)
+        t.start()   
+        print "in start process."  
 
 class MainWindow():
     def __init__(self):
@@ -178,7 +202,7 @@ class MainWindow():
 #    global width
 #    global height
 
-    def redirect_vbox(self):
+    def redirect2process(self, funcnames):
 #        global fix
 #        global choose_x
 #        global process_x
@@ -203,17 +227,35 @@ class MainWindow():
             self.fix.move(self.vbox_choose, self.choose_x, 0)
             self.fix.move(self.vbox_process, self.process_x, 0)
             gtk.gdk.threads_leave()
+        self.vbox_process.start_process(funcnames)
             
-    def openWindow(self):
-        self.fix.put(self.vbox_process, self.process_x, 0)
+    def openWindow(self, names, descs):
         self.fix.put(self.vbox_choose, self.choose_x, 0)
+        self.fix.put(self.vbox_process, self.process_x, 0)
         self.fix.show()
-
+        self.vbox_choose.refresh_treeview(names, descs)
         self.window.add(self.fix)
         self.window.show_all()
         gtk.main()
 
-
+def error_dialog(message):
+    dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK, None)
+    dialog.set_title("ERROR")
+    dialog.set_markup("<b>" + message + "</b>")
+    dialog.set_default_size(400, 300)
+    dialog.show_all()
+    dialog.set_position(gtk.WIN_POS_CENTER)
+    dialog.run()
+    dialog.destroy()
+    return False
+def test():
+    cmdstatus, cmdoutput = commands.getstatusoutput('cdos-upgrade --check')
+    if(cmdstatus == 0):
+        funcnames, funcdescs = cmdoutput.split('\n')
+        main = MainWindow()
+        main.openWindow(funcnames.split('####'), funcdescs.split('####'))
+    else:
+        error_dialog("Command(cdos-upgrade --check) fail")
 def update_cdos(widget, treeView, statusIcon, wTree):
     model = treeView.get_model()
     iter = model.get_iter_first()
@@ -229,13 +271,17 @@ def update_cdos(widget, treeView, statusIcon, wTree):
         else:
             model.set_value(iter, 0, "false")
         iter = model.iter_next(iter)
-    main = MainWindow()
-    main.openWindow()
+    cmdstatus, cmdoutput = commands.getstatusoutput('cdos-upgrade --check')
+    if(cmdstatus == 0):
+        main = MainWindow()
+        main.openWindow(cmdoutput.split('\n'))
+    else:
+        error_dialog("Command(cdos-upgrade --check) fail")
 #    for row in model:
 #        if(pkginfodict[row[1]].origin == "cosdesktop"):
 #            row[0] = "true"
 
-#    cmdstatus, cmdoutput = commands.getstatusoutput('sudo apt-get install cos-upgrade')
+#    cmdstatus, cmdoutput = commands.getstatusoutput('sudo apt-get install cdos-upgrade')
 #    if(cmdstatus != 0):
 #        dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK, None)
 #        dialog.set_title("ERROR")
