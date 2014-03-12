@@ -1,8 +1,8 @@
-cosupdate (0.5.0) iceblue; urgency=low
+mintupdate (2014.02.25) pony; urgency=low
 
-  * Initial release by ISCAS
+  * fixed for CDOS updates
 
- -- ISCAS <cos_ibp@iscas.ac.cn>  Fri, 01 Nov 2013 13:38:00 +0000
+ -- CDOS Team <cdos_support@iscas.ac.cn>  Tues, 25 Feb 2014 13:38:00 +0000
 
 mintupdate (4.5.2) olivia; urgency=low
 

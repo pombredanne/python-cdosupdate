@@ -1,13 +1,13 @@
-Source: cosupdate
+Source: mintupdate
 Section: admin
 Priority: optional
-Maintainer: ISCAS <cos_ibp@iscas.ac.cn>
+Maintainer: CDOS Team <cdos_support@iscas.ac.cn>
 Build-Depends: debhelper (>= 5)
 Standards-Version: 0.5.0
 
-Package: cosupdate
+Package: mintupdate
 Architecture: all
-Depends: python (>= 2.4), python (<< 3), python-gtk2, python-glade2, synaptic, cos-common, cos-mirrors
+Depends: python (>= 2.4), python (<< 3), python-gtk2, python-glade2, synaptic, mint-common, mint-mirrors
 Conflicts: mintupdate-gnome, mintupdate-kde, mintupdate-xfce
 Replaces: mintupdate-gnome, mintupdate-kde, mintupdate-xfce
 Description: Update Manager
