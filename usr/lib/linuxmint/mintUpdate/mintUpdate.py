@@ -17,8 +17,7 @@ try:
     from user import home
     sys.path.append('/usr/lib/linuxmint/common')
     from configobj import ConfigObj
-    from getPackagesInfo import checkAPT 
-#    from getPackagesInfo import pkginfodict
+    from getPackagesInfo import checkAPT
     from updateCDOS import update_cdos
     from globalParameter import *
 except Exception, detail:

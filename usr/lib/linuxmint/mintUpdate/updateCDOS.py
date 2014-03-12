@@ -127,18 +127,20 @@ class ProcessVBox(gtk.VBox):
         if(len(pkgs2update) > 0):
             pkgs = ' '.join(str(pkg) for pkg in pkgs2update)
             popen = subprocess.Popen(['sudo', 'apt-get', 'install', pkgs], stdout = subprocess.PIPE)
-            out = popen.communicate()[0]
+            out, error = popen.communicate()
             gtk.gdk.threads_enter()
             self.textbuf.insert_at_cursor(out)
+            self.textbuf.insert_at_cursor(error)
             end_mark = self.textbuf.get_insert()
             self.textview.scroll_to_mark(end_mark, 0.0)
             gtk.gdk.threads_leave()
 
         for func in shellfuncs:
             popen = subprocess.Popen(['cdos-upgrade', '--set-steps', func], stdout = subprocess.PIPE)
-            out = popen.communicate()[0]
+            out, error = popen.communicate()
             gtk.gdk.threads_enter()
             self.textbuf.insert_at_cursor(out)
+            self.textbuf.insert_at_cursor(error)
             end_mark = self.textbuf.get_insert()
             self.textview.scroll_to_mark(end_mark, 0.0)
             gtk.gdk.threads_leave()
