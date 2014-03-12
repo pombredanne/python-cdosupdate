@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+import gtk
+import pygtk
+
 model_check = 0
 model_name = 1
 model_levelpix = 2
@@ -11,3 +14,25 @@ model_des = 8
 model_warning = 9
 model_extrainfo = 10
 pkginfodict={}
+
+def error_dialog(message):
+    dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK, None)
+    dialog.set_title("ERROR")
+    dialog.set_markup("<b>" + message + "</b>")
+    dialog.set_default_size(400, 300)
+    dialog.show_all()
+    dialog.set_position(gtk.WIN_POS_CENTER)
+    dialog.run()
+    dialog.destroy()
+    return False
+
+def warning_dialog(message):
+    dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING, gtk.BUTTONS_OK, None)
+    dialog.set_title("ERROR")
+    dialog.set_markup("<b>" + message + "</b>")
+    dialog.set_default_size(400, 300)
+    dialog.show_all()
+    dialog.set_position(gtk.WIN_POS_CENTER)
+    dialog.run()
+    dialog.destroy()
+    return False

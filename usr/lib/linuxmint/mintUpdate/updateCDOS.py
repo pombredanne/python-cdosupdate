@@ -38,46 +38,43 @@ class ChooseVBox(gtk.VBox):
                 model.set_value(iter, 0, "true")    
 
     def btn_accept_clicked(self, button, treeview):
-        #print button.get_label()
         model = treeview.get_model()
         iter = model.get_iter_first()
         funcnames = []
         while (iter != None):
             checked = model.get_value(iter, 0)
             if (checked == "true"):
-                funcnames.append(model.get_value(iter, 1))
+                funcnames.append(model.get_value(iter, 2))
             iter = model.iter_next(iter)
         #print "Your selection:", funcnames
         t = threading.Thread(target=self.main.redirect2process, args=(funcnames,))
         t.start()
 
     def btn_cancel_clicked(self, button):
-        print button.get_label()
+        global model_data
+        model_data = []
         self.main.window.hide()
         #pid = os.getpid()    
         #os.system("kill -9 %s &" % pid)
 
     def pack(self):
         label = gtk.Label()
-        label.set_markup("<b>The following custom will be exexuted:</b>")
+        label.set_markup("<b>The following customization will be exexuted:</b>")
         label.set_alignment(0, 0.5)
 
         self.treeview_choose = gtk.TreeView()
         cr = gtk.CellRendererToggle()
         cr.connect("toggled", self.toggled, self.treeview_choose)
-        column1 = gtk.TreeViewColumn("Order", cr)
+        column1 = gtk.TreeViewColumn("Check", cr)
         column1.set_cell_data_func(cr, self.celldatafunction_checkbox)
-        column2 = gtk.TreeViewColumn("Description", gtk.CellRendererText(), text=2)
-        #column2.set_sort_column_id(1)
-        column2.set_resizable(True)
+        column2 = gtk.TreeViewColumn("Description", gtk.CellRendererText(), text=1)
+        #column2.set_resizable(True)
+        column3 = gtk.TreeViewColumn("Command", gtk.CellRendererText(), text=2)
+        #column3.set_resizable(True)
         self.treeview_choose.append_column(column1)
         self.treeview_choose.append_column(column2)
-        #operations = ['aaa', 'bbb', 'ccc', 'ddd', 'eee', 'fff']
+        self.treeview_choose.append_column(column3)
         model = gtk.TreeStore(str, str, str)
-        #for oper in operations:
-        #    iter = model.insert_before(None, None)
-        #    model.set_value(iter, 0, "true")
-        #    model.set_value(iter, 1, oper)
         self.treeview_choose.set_model(model)
         self.treeview_choose.set_headers_clickable(False)
         self.treeview_choose.set_reorderable(False)
@@ -100,14 +97,16 @@ class ChooseVBox(gtk.VBox):
         self.pack_start(label, False, False, 10)
         self.pack_start(scrolledWindow, True, True, 0)
         self.pack_start(hbuttonbox, False, False, 5)
-    def refresh_treeview(self, names, descs):
+    def refresh_treeview(self):
+        global model_data
         model = self.treeview_choose.get_model()
-        for name,desc in itertools.izip(names, descs):
+        for data in model_data:
             iter = model.insert_before(None, None)
-            model.set_value(iter, 0, "true")
-            model.set_value(iter, 1, name)
-            model.set_value(iter, 2, desc)
-            print name, desc
+            model.set_value(iter, 0, data[0])
+            model.set_value(iter, 1, data[1])
+            model.set_value(iter, 2, data[2])
+            #' '.join(str(elem) for elem in data[2])
+            print data
 
 
 class ProcessVBox(gtk.VBox):
@@ -120,24 +119,29 @@ class ProcessVBox(gtk.VBox):
         self.textbuf = gtk.TextBuffer()
         self.textview.set_buffer(self.textbuf)
         self.hbuttonbox = gtk.HButtonBox()
-        self.tmpfile="/tmp/cdos-upgrade"
+        #self.tmpfile="/tmp/cdos-upgrade"
         self.pack()
-    def refresh_textbuf(self, shellfuncs):
-        global pkgs2update
-        if(len(pkgs2update) > 0):
-            pkgs = ' '.join(str(pkg) for pkg in pkgs2update)
-            popen = subprocess.Popen(['sudo', 'apt-get', 'install', pkgs], stdout = subprocess.PIPE)
-            out, error = popen.communicate()
-            gtk.gdk.threads_enter()
-            self.textbuf.insert_at_cursor(out)
-            self.textbuf.insert_at_cursor(error)
-            end_mark = self.textbuf.get_insert()
-            self.textview.scroll_to_mark(end_mark, 0.0)
-            gtk.gdk.threads_leave()
+    def refresh_textbuf(self, allcommands):
+        #global pkgs2update
+        #if(len(pkgs2update) > 0):
+        #    pkgs = ' '.join(str(pkg) for pkg in pkgs2update)
+        #    popen = subprocess.Popen(['sudo', 'apt-get', 'install', pkgs], stdout = subprocess.PIPE)
+        #    out, error = popen.communicate()
+        #    gtk.gdk.threads_enter()
+        #    self.textbuf.insert_at_cursor(out)
+        #    self.textbuf.insert_at_cursor(error)
+        #    end_mark = self.textbuf.get_insert()
+        #    self.textview.scroll_to_mark(end_mark, 0.0)
+        #    gtk.gdk.threads_leave()
 
-        for func in shellfuncs:
-            popen = subprocess.Popen(['cdos-upgrade', '--set-steps', func], stdout = subprocess.PIPE)
+        for cmd in allcommands:
+            print cmd.split(' ')
+            popen = subprocess.Popen(cmd.split(' '), stdout = subprocess.PIPE)
             out, error = popen.communicate()
+            if(out == None):
+                out = ""
+            if(error == None):
+                error = ""
             gtk.gdk.threads_enter()
             self.textbuf.insert_at_cursor(out)
             self.textbuf.insert_at_cursor(error)
@@ -220,38 +224,43 @@ class MainWindow():
             gtk.gdk.threads_leave()
         self.vbox_process.start_process(funcnames)
             
-    def openWindow(self, names, descs):
+    def openWindow(self):
         self.fix.put(self.vbox_choose, self.choose_x, 0)
         self.fix.put(self.vbox_process, self.process_x, 0)
         self.fix.show()
-        self.vbox_choose.refresh_treeview(names, descs)
+        self.vbox_choose.refresh_treeview()
         self.window.add(self.fix)
         self.window.show_all()
         gtk.main()
 
-global pkgs2update
-pkgs2update = ['cos-info']
+#global pkgs2update
+#pkgs2update = ['cos-info']
+global model_data
+model_data = []
 
-def error_dialog(message):
-    dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK, None)
-    dialog.set_title("ERROR")
-    dialog.set_markup("<b>" + message + "</b>")
-    dialog.set_default_size(400, 300)
-    dialog.show_all()
-    dialog.set_position(gtk.WIN_POS_CENTER)
-    dialog.run()
-    dialog.destroy()
-    return False
 def test():
+    global model_data
+    name = 'ghostscript'
+    model_data.append(('true', 'Update Package' + name, 'apt-get -y --force-yes install ' + name))
     cmdstatus, cmdoutput = commands.getstatusoutput('cdos-upgrade --check')
     if(cmdstatus == 0):
         funcnames, funcdescs = cmdoutput.split('\n')
-        main = MainWindow()
-        main.openWindow(funcnames.split('####'), funcdescs.split('####'))
+        descs = funcdescs.split('####')
+        cmds = funcnames.split('####')
+        for descs,cmd in itertools.izip(descs, cmds):
+            model_data.append(('true', descs, cmd))
     else:
         error_dialog("Command(cdos-upgrade --check) fail")
+    model_data = []
+    if(len(model_data) > 0):
+        main = MainWindow()
+        main.openWindow()
+    else:
+        warning_dialog("All customization has achieved.")
+
 def update_cdos(widget, treeView, statusIcon, wTree):
-    global pkgs2update
+    global model_data
+    #pkgs2update = []
     model = treeView.get_model()
     iter = model.get_iter_first()
     num_selected = 0
@@ -261,16 +270,26 @@ def update_cdos(widget, treeView, statusIcon, wTree):
         if(pkginfodict[name].origin == "cosdesktop"):
             model.set_value(iter, 0, "true")
             num_selected = num_selected + 1
-            pkgs2update.append(name)
+            model_data.append(('true', 'Update Package' + name, 'apt-get -y --force-yes install ' + name))
         else:
             model.set_value(iter, 0, "false")
         iter = model.iter_next(iter)
     cmdstatus, cmdoutput = commands.getstatusoutput('cdos-upgrade --check')
     if(cmdstatus == 0):
-        main = MainWindow()
-        main.openWindow(cmdoutput.split('\n'))
+        funcnames, funcdescs = cmdoutput.split('\n')
+        descs = funcdescs.split('####')
+        cmds = funcnames.split('####')
+        for descs,cmd in itertools.izip(descs, cmds):
+            model_data.append(('true', descs, cmd))
     else:
-        error_dialog("Command(cdos-upgrade --check) fail")
+        error_dialog("Command(cdos-upgrade --check) fail.")
+    if(len(model_data) > 0):
+        main = MainWindow()
+        main.openWindow()
+    else:
+        warning_dialog("All customization has achieved.")
+
+
 #    for row in model:
 #        if(pkginfodict[row[1]].origin == "cosdesktop"):
 #            row[0] = "true"
