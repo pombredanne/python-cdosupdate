@@ -2,6 +2,7 @@
 import gtk
 import pygtk
 
+CDOS_LABEL = "CDOS"
 model_check = 0
 model_name = 1
 model_levelpix = 2

@@ -60,6 +60,7 @@ def checkAPT(use_synaptic, window_id):
                 sourcePackage = pkg.candidate.source_name
                 description = pkg.candidate.description
                 description = description.replace('\n\n', '\n')
+                label = pkg.candidate.origins[0].label
                 origin = pkg.candidate.origins[0].origin
                 site = pkg.candidate.origins[0].site
                 if (newVersion != oldVersion):
@@ -70,6 +71,7 @@ def checkAPT(use_synaptic, window_id):
                     info.size = size
                     info.sourcePackage = sourcePackage
                     info.description = description
+                    info.label = label
                     info.origin = origin
                     info.site = site
                     pkginfodict[info.name] = info

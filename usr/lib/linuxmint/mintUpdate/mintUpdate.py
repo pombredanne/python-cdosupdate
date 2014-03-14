@@ -59,7 +59,7 @@ else:
         libc.call('prctl', 15, 'mintUpdate', 0, 0, 0)
 
 # i18n
-gettext.install("mintupdate", "/usr/share/linuxmint/locale")
+gettext.install("mintupdate", "/usr/lib/linuxmint/mintUpdate/locale")
 
 # i18n for menu item
 menuName = _("Update Manager")
@@ -312,7 +312,7 @@ class RefreshThread(threading.Thread):
 
                     if packageIsBlacklisted:
                         continue
-
+                    label = pkgs2update[pkg].label
                     newVersion = pkgs2update[pkg].newVersion
                     oldVersion = pkgs2update[pkg].oldVersion
                     size = int(pkgs2update[pkg].size)
@@ -326,33 +326,38 @@ class RefreshThread(threading.Thread):
                     #rules = rulesFile.readlines()
                     foundVersionRule = False
                     foundPackageRule = False # whether we found a rule with the exact package name or not
-                    for rules in rulesAll:
-                        if (foundVersionRule == False):
-                            rule_package = rules[0]
-                            rule_version = rules[1]
-                            rule_level = rules[2]
-                            rule_extraInfo = rules[3]
-                            rule_warning = rules[4]
-                            if (rule_package == pkg):
-                                foundPackageRule = True
-                                if (rule_version == newVersion):
-                                    level = rule_level
-                                    extraInfo = rule_extraInfo
-                                    warning = rule_warning
-                                    foundVersionRule = True # We found a rule with the exact package name and version, no need to look elsewhere
+                    if(label == CDOS_LABEL):
+                        level = 1
+                        extraInfo = "packages from CDOS."
+                        warning = "package from CDOS."
+                    else:
+                        for rules in rulesAll:
+                            if (foundVersionRule == False):
+                                rule_package = rules[0]
+                                rule_version = rules[1]
+                                rule_level = rules[2]
+                                rule_extraInfo = rules[3]
+                                rule_warning = rules[4]
+                                if (rule_package == pkg):
+                                    foundPackageRule = True
+                                    if (rule_version == newVersion):
+                                        level = rule_level
+                                        extraInfo = rule_extraInfo
+                                        warning = rule_warning
+                                        foundVersionRule = True # We found a rule with the exact package name and version, no need to look elsewhere
+                                    else:
+                                        if (rule_version == "*"):
+                                            level = rule_level
+                                            extraInfo = rule_extraInfo
+                                            warning = rule_warning
                                 else:
-                                    if (rule_version == "*"):
-                                        level = rule_level
-                                        extraInfo = rule_extraInfo
-                                        warning = rule_warning
-                            else:
-                                if (rule_package.startswith("*")):
-                                    keyword = rule_package.replace("*", "")
-                                    index = pkg.find(keyword)
-                                    if (index > -1 and foundPackageRule == False):
-                                        level = rule_level
-                                        extraInfo = rule_extraInfo
-                                        warning = rule_warning
+                                    if (rule_package.startswith("*")):
+                                        keyword = rule_package.replace("*", "")
+                                        index = pkg.find(keyword)
+                                        if (index > -1 and foundPackageRule == False):
+                                            level = rule_level
+                                            extraInfo = rule_extraInfo
+                                            warning = rule_warning
 
                     level = int(level)
                     if (prefs["level" + str(level) + "_visible"]):
@@ -1121,32 +1126,6 @@ def install(widget, treeView, statusIcon, wTree):
     install = InstallThread(treeView, statusIcon, wTree)
     install.start()
 
-#def update_cdos(widget, treeView, statusIcon, wTree):
-#    model = treeView.get_model()
-#    iter = model.get_iter_first()
-#    num_selected = 0
-#    pkgsname = []
-#    while (iter != None):
-#        name = model.get_value(iter, model_name)
-#        print pkginfodict[name].origin
-#        if(pkginfodict[name].origin == "cosdesktop"):
-#            model.set_value(iter, 0, "true")
-#            num_selected = num_selected + 1
-#            pkgsname.append(name)
-#        else:
-#            model.set_value(iter, 0, "false")
-#        iter = model.iter_next(iter)
-#    cmdstatus, cmdoutput = commands.getstatusoutput('sudo apt-get install cdos-upgrade')
-#    if(cmdstatus != 0):
-#        dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK, None)
-#        dialog.set_title("ERROR")
-#        dialog.set_markup("<b>" + "Package cdos-upgrade is not install correct.\nContact us: cdos_ibp@iscas.ac.cn" + "</b>")
-#        dialog.set_default_size(400, 300)
-#        dialog.show_all()
-#        dialog.run()
-#        dialog.destroy()
-#        return False
-
 # notebook-setting
 def switch_page(notebook, page, page_num, Wtree, treeView):
     selection = treeView.get_selection()
@@ -1796,7 +1775,7 @@ try:
     wTree.get_widget("tool_refresh").set_label(_("Refresh"))
     wTree.get_widget("tool_apply").set_label(_("Install Updates"))
     wTree.get_widget("update_cdos").set_label(_("CDOS Updates"))
-    wTree.get_widget("update_cdos").set_tooltip_text(_("Select Packages for CDOS Updates"))
+    wTree.get_widget("update_cdos").set_tooltip_text(_("Update for CDOS system"))
     wTree.get_widget("label9").set_text(_("Description"))
     wTree.get_widget("label8").set_text(_("Changelog"))
     wTree.get_widget("label_error_detail").set_text("")

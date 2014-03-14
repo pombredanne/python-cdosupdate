@@ -59,17 +59,17 @@ class ChooseVBox(gtk.VBox):
 
     def pack(self):
         label = gtk.Label()
-        label.set_markup("<b>The following customization will be exexuted:</b>")
+        label.set_markup("<b>" + _("The following customization will be exexuted:") + "</b>")
         label.set_alignment(0, 0.5)
 
         self.treeview_choose = gtk.TreeView()
         cr = gtk.CellRendererToggle()
         cr.connect("toggled", self.toggled, self.treeview_choose)
-        column1 = gtk.TreeViewColumn("Check", cr)
+        column1 = gtk.TreeViewColumn(_("Check"), cr)
         column1.set_cell_data_func(cr, self.celldatafunction_checkbox)
-        column2 = gtk.TreeViewColumn("Description", gtk.CellRendererText(), text=1)
+        column2 = gtk.TreeViewColumn(_("Description"), gtk.CellRendererText(), text=1)
         #column2.set_resizable(True)
-        column3 = gtk.TreeViewColumn("Command", gtk.CellRendererText(), text=2)
+        column3 = gtk.TreeViewColumn(_("Command"), gtk.CellRendererText(), text=2)
         #column3.set_resizable(True)
         self.treeview_choose.append_column(column1)
         self.treeview_choose.append_column(column2)
@@ -241,7 +241,7 @@ model_data = []
 def test():
     global model_data
     name = 'ghostscript'
-    model_data.append(('true', 'Update Package' + name, 'apt-get -y --force-yes install ' + name))
+    model_data.append(('true', _("Update Package") + name, 'apt-get -y --force-yes install ' + name))
     cmdstatus, cmdoutput = commands.getstatusoutput('cdos-upgrade --check')
     if(cmdstatus == 0):
         funcnames, funcdescs = cmdoutput.split('\n')
@@ -267,7 +267,7 @@ def update_cdos(widget, treeView, statusIcon, wTree):
     while (iter != None):
         name = model.get_value(iter, model_name)
         #print pkginfodict[name].origin
-        if(pkginfodict[name].origin == "cosdesktop"):
+        if(pkginfodict[name].label == "CDOS"):
             model.set_value(iter, 0, "true")
             num_selected = num_selected + 1
             model_data.append(('true', 'Update Package' + name, 'apt-get -y --force-yes install ' + name))
