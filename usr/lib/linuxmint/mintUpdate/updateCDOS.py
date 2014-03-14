@@ -52,7 +52,6 @@ class ChooseVBox(gtk.VBox):
 
     def btn_cancel_clicked(self, button):
         global model_data
-        model_data = []
         self.main.window.hide()
         #pid = os.getpid()    
         #os.system("kill -9 %s &" % pid)
@@ -87,9 +86,9 @@ class ChooseVBox(gtk.VBox):
         hbuttonbox = gtk.HButtonBox()
         hbuttonbox.set_spacing(50)
         hbuttonbox.set_layout(gtk.BUTTONBOX_CENTER)
-        btn_accept = gtk.Button("accept")
+        btn_accept = gtk.Button(_("accept"))
         btn_accept.connect("clicked", self.btn_accept_clicked, self.treeview_choose)
-        btn_cancel = gtk.Button("cancel")
+        btn_cancel = gtk.Button(_("cancel"))
         btn_cancel.connect("clicked", self.btn_cancel_clicked)
         hbuttonbox.pack_start(btn_accept)
         hbuttonbox.pack_end(btn_cancel)
@@ -106,7 +105,7 @@ class ChooseVBox(gtk.VBox):
             model.set_value(iter, 1, data[1])
             model.set_value(iter, 2, data[2])
             #' '.join(str(elem) for elem in data[2])
-            print data
+            #print data
 
 
 class ProcessVBox(gtk.VBox):
@@ -135,7 +134,7 @@ class ProcessVBox(gtk.VBox):
         #    gtk.gdk.threads_leave()
 
         for cmd in allcommands:
-            print cmd.split(' ')
+            #print cmd.split(' ')
             popen = subprocess.Popen(cmd.split(' '), stdout = subprocess.PIPE)
             out, error = popen.communicate()
             if(out == None):
@@ -151,17 +150,17 @@ class ProcessVBox(gtk.VBox):
         self.hbuttonbox.set_sensitive(True)
 
     def btn_accept_clicked(self, button):
-        print button.get_label()
+        #print button.get_label()
         t = threading.Thread(target=self.refresh_textbuf)
         t.start()     
     def btn_close_clicked(self, button):
-        print button.get_label()
+        #print button.get_label()
         self.main.window.hide()
         #pid = os.getpid()    
         #os.system("kill -9 %s &" % pid)
     def pack(self):
         label = gtk.Label()
-        label.set_markup("<b>Status output:</b>")
+        label.set_markup("<b>" + _("Status output:") + "</b>")
         label.set_alignment(0, 0.5)
         scrolledWindow = gtk.ScrolledWindow()
         scrolledWindow.set_shadow_type(gtk.SHADOW_IN)
@@ -172,7 +171,7 @@ class ProcessVBox(gtk.VBox):
         self.hbuttonbox.set_layout(gtk.BUTTONBOX_CENTER)
         #btn_accept = gtk.Button("accept")
         #btn_accept.connect("clicked", self.btn_accept_clicked)
-        btn_close = gtk.Button("close")
+        btn_close = gtk.Button(_("close"))
         btn_close.connect("clicked", self.btn_close_clicked)
         self.hbuttonbox.pack_start(btn_close)
         #hbuttonbox.pack_end(btn_cancel)
@@ -185,7 +184,7 @@ class ProcessVBox(gtk.VBox):
     def start_process(self, funcnames):
         t = threading.Thread(target=self.refresh_textbuf, args=(funcnames,))
         t.start()   
-        print "in start process."  
+        #print "in start process."  
 
 class MainWindow():
     def __init__(self):
@@ -195,7 +194,7 @@ class MainWindow():
         self.process_x = self.width
         self.fix = gtk.Fixed()
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.window.set_title("Update")
+        self.window.set_title(_("System Customization"))
         self.window.set_icon_from_file("/usr/lib/linuxmint/mintUpdate/icons/base.svg")
         self.window.set_default_size(self.width, self.height)
         self.window.set_geometry_hints(self.window, self.width, self.height, self.width, self.height)
@@ -260,7 +259,7 @@ def test():
 
 def update_cdos(widget, treeView, statusIcon, wTree):
     global model_data
-    #pkgs2update = []
+    model_data = []
     model = treeView.get_model()
     iter = model.get_iter_first()
     num_selected = 0

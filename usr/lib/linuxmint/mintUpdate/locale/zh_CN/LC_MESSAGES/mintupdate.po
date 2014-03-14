@@ -332,11 +332,11 @@ msgstr "小时"
 msgid "minutes"
 msgstr "分钟"
 
-msgid "CDOS Updates"
-msgstr "CDOS更新"
+msgid "System Updates"
+msgstr "系统更新"
 
-msgid "Update for CDOS system"
-msgstr "更新CDOS系统"
+msgid "Customization for System"
+msgstr "为系统进行定制操作"
 
 msgid "The following customization will be exexuted:"
 msgstr "将会进行如下定制："
@@ -349,3 +349,18 @@ msgstr "指令"
 
 msgid "Update Package"
 msgstr "升级软件包"
+
+msgid "accept"
+msgstr "接受"
+
+msgid "cancel"
+msgstr "取消"
+
+msgid "close"
+msgstr "关闭"
+
+msgid "System Customization"
+msgstr "系统定制"
+
+msgid "Status output:"
+msgstr "状态输出："

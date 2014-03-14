@@ -20,8 +20,8 @@ sudo： 无法解析主机：xifei-Lenovo-Product
 
 "<b>" + _("Please enter a package name:") + "</b>"
 
-msgid "CDOS Updates"
-msgstr "CDOS更新"
+msgid "System Updates"
+msgstr "系统更新"
 
 msgid "Update for CDOS system"
 msgstr "更新CDOS系统"
@@ -37,6 +37,21 @@ msgstr "指令"
 
 msgid "Update Package"
 msgstr "升级软件包"
+
+msgid "accept"
+msgstr "接受"
+
+msgid "cancel"
+msgstr "取消"
+
+msgid "System Customization"
+msgstr "系统定制"
+
+msgid "Status output:"
+msgstr "状态输出："
+
+msgid "close"
+msgstr "关闭"
 
 msgid ""
 msgstr ""
