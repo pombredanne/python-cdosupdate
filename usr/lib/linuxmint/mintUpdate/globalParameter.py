@@ -20,6 +20,8 @@ def error_dialog(message):
     dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK, None)
     dialog.set_title("ERROR")
     dialog.set_markup("<b>" + message + "</b>")
+    label = gtk.Label(_("Contact us: cdos_support@iscas.ac.cn"))
+    dialog.vbox.pack_start(label)
     dialog.set_default_size(400, 300)
     dialog.show_all()
     dialog.set_position(gtk.WIN_POS_CENTER)

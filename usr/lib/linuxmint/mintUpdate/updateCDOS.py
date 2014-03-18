@@ -118,21 +118,8 @@ class ProcessVBox(gtk.VBox):
         self.textbuf = gtk.TextBuffer()
         self.textview.set_buffer(self.textbuf)
         self.hbuttonbox = gtk.HButtonBox()
-        #self.tmpfile="/tmp/cdos-upgrade"
         self.pack()
     def refresh_textbuf(self, allcommands):
-        #global pkgs2update
-        #if(len(pkgs2update) > 0):
-        #    pkgs = ' '.join(str(pkg) for pkg in pkgs2update)
-        #    popen = subprocess.Popen(['sudo', 'apt-get', 'install', pkgs], stdout = subprocess.PIPE)
-        #    out, error = popen.communicate()
-        #    gtk.gdk.threads_enter()
-        #    self.textbuf.insert_at_cursor(out)
-        #    self.textbuf.insert_at_cursor(error)
-        #    end_mark = self.textbuf.get_insert()
-        #    self.textview.scroll_to_mark(end_mark, 0.0)
-        #    gtk.gdk.threads_leave()
-
         for cmd in allcommands:
             #print cmd.split(' ')
             popen = subprocess.Popen(cmd.split(' '), stdout = subprocess.PIPE)
@@ -232,8 +219,6 @@ class MainWindow():
         self.window.show_all()
         gtk.main()
 
-#global pkgs2update
-#pkgs2update = ['cos-info']
 global model_data
 model_data = []
 
@@ -243,23 +228,27 @@ def test():
     model_data.append(('true', _("Update Package") + name, 'apt-get -y --force-yes install ' + name))
     cmdstatus, cmdoutput = commands.getstatusoutput('cdos-upgrade --check')
     if(cmdstatus == 0):
-        funcnames, funcdescs = cmdoutput.split('\n')
-        descs = funcdescs.split('####')
-        cmds = funcnames.split('####')
-        for descs,cmd in itertools.izip(descs, cmds):
-            model_data.append(('true', descs, cmd))
+        if(cmdoutput != ''):
+            funcnames, funcdescs = cmdoutput.split('\n')
+            descs = funcdescs.split('####')
+            cmds = funcnames.split('####')
+            for descs,cmd in itertools.izip(descs, cmds):
+                model_data.append(('true', descs, cmd))
     else:
-        error_dialog("Command(cdos-upgrade --check) fail")
+        error_dialog(_("Command fail: cdos-upgrade --check"))
     model_data = []
     if(len(model_data) > 0):
         main = MainWindow()
         main.openWindow()
     else:
-        warning_dialog("All customization has achieved.")
+        warning_dialog(_("All customization has achieved."))
 
 def update_cdos(widget, treeView, statusIcon, wTree):
     global model_data
     model_data = []
+    cmdstatus, cmdoutput = commands.getstatusoutput('apt-get install cdos-upgrade')
+    if(cmdstatus != 0):
+        error_dialog(_("Package cdos-upgrade is not install correct.")
     model = treeView.get_model()
     iter = model.get_iter_first()
     num_selected = 0
@@ -275,34 +264,24 @@ def update_cdos(widget, treeView, statusIcon, wTree):
         iter = model.iter_next(iter)
     cmdstatus, cmdoutput = commands.getstatusoutput('cdos-upgrade --check')
     if(cmdstatus == 0):
-        funcnames, funcdescs = cmdoutput.split('\n')
-        descs = funcdescs.split('####')
-        cmds = funcnames.split('####')
-        for descs,cmd in itertools.izip(descs, cmds):
-            model_data.append(('true', descs, cmd))
+        if(cmdoutput != ''):
+            funcnames, funcdescs = cmdoutput.split('\n')
+            descs = funcdescs.split('####')
+            cmds = funcnames.split('####')
+            for descs,cmd in itertools.izip(descs, cmds):
+                model_data.append(('true', descs, cmd))
     else:
-        error_dialog("Command(cdos-upgrade --check) fail.")
+        error_dialog(_("Command fail: cdos-upgrade --check"))
     if(len(model_data) > 0):
         main = MainWindow()
         main.openWindow()
     else:
-        warning_dialog("All customization has achieved.")
+        warning_dialog(_("All customization has achieved."))
 
 
 #    for row in model:
 #        if(pkginfodict[row[1]].origin == "cosdesktop"):
 #            row[0] = "true"
-
-#    cmdstatus, cmdoutput = commands.getstatusoutput('sudo apt-get install cdos-upgrade')
-#    if(cmdstatus != 0):
-#        dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK, None)
-#        dialog.set_title("ERROR")
-#        dialog.set_markup("<b>" + "Package cos-upgrade is not install correct." + "</b>")
-#        dialog.set_default_size(400, 300)
-#        dialog.show_all()
-#        dialog.run()
-#        dialog.destroy()
-#        return False
 
 #    if(num_selected > 0):
 #        cmd = ["sudo", "/usr/sbin/synaptic", "--hide-main-window",  \

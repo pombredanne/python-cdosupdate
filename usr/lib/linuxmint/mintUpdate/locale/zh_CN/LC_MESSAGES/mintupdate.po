@@ -364,3 +364,15 @@ msgstr "系统定制"
 
 msgid "Status output:"
 msgstr "状态输出："
+
+msgid "Package cdos-upgrade is not install correct."
+msgstr "软件包cdos-upgrade没有正确安装。"
+
+msgid "All customization has achieved."
+msgstr "已实现所有定制。"
+
+msgid "Command fail: cdos-upgrade --check"
+msgstr "指令错误： cdos-upgrade --check"
+
+msgid "Contact us: cdos_support@iscas.ac.cn"
+msgstr "联系我们：cdos_support@iscas.ac.cn"
