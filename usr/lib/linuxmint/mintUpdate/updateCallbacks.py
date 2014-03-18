@@ -16,14 +16,42 @@ from updateClasses import ChangelogRetriever
 
 gtk.gdk.threads_init()
 
-        
+
 def add_to_ignore_list(widget, treeview_update, pkg, statusIcon, wTree):
     os.system("echo \"%s\" >> /etc/linuxmint/mintupdate.ignored" % pkg)
     #force_refresh(widget, treeview_update, statusIcon, wTree)
     t = threading.Thread(target=refresh_status, args=(treeview_update, statusIcon, wTree, [pkg]))
     t.start()
 
+def show_pkg_info_window(text):
+    window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+    window.set_title(_("Package Information"))
+    window.set_icon_from_file("/usr/lib/linuxmint/mintUpdate/icons/base.svg")
+    window.set_default_size(400, 250)
+    window.set_position(gtk.WIN_POS_CENTER)
+    vbox = gtk.VBox()
+    label = gtk.Label(text)
+    scrolledWindow = gtk.ScrolledWindow()
+    scrolledWindow.set_shadow_type(gtk.SHADOW_IN)
+    scrolledWindow.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+#    scrolledWindow.add(label)
+    hbuttonbox = gtk.HButtonBox()
+    hbuttonbox.set_spacing(50)
+    hbuttonbox.set_layout(gtk.BUTTONBOX_CENTER)
+    btn_ok = gtk.Button(_("OK"))
+    def btn_ok_clicked(button):
+        window.hide()
+    btn_ok.connect("clicked", btn_ok_clicked)
+    hbuttonbox.pack_start(btn_ok)
+    vbox.pack_start(label)
+    vbox.pack_start(hbuttonbox, False, False)
+    window.add(vbox)
+    window.show_all()
+    gtk.main()
+
 def show_pkg_info(widget, selected_package, statusIcon, wTree):
+    print g.pkginfodict[selected_package].printInfo()
+    show_pkg_info_window(g.pkginfodict[selected_package].printInfo())
     return False
 
 def menuPopup(widget, event, treeview_update, statusIcon, wTree):

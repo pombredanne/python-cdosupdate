@@ -3,6 +3,7 @@
 import os
 import sys
 import apt
+import itertools
 from globalParameter import *
 
 class pkginfo():
@@ -33,6 +34,7 @@ class pkginfo():
         pdict['installed_size'] = version.installed_size
         pdict['md5'] = version.md5
         pdict['uri'] = version.uri
+        pdict['uris'] = version.uris
         pdict['downloadable'] = version.downloadable
         #pdict['section'] = version.section
         #pdict['priority'] = version.priority
@@ -61,31 +63,39 @@ class pkginfo():
         pdict['origins'] = origins_tuple
 
     def printInfo(self):
-        info = []
-        info.append("软件名(id)：%s(%d)" % (self.name, self.id))
-        info.append("软件包名：" + self.fullname)
-        iinfo.append("版本：" + self.installed_info['version'])
-        info.append("大小：" + self.installed_info['size'])
-        info.append("MD5值：" + self.installed_info['md5'])
-        info.append("下载地址：" + self.installed_info['uri'])
-        origins = self.installed_info['origins'][0]
-        origin = origins[0]
-        info.append("源信息：(%s-%s)" % (origin['label'], origin['origin']))
-        info.append("----------新软件包信息----------")
-        info.append("版本：" + self.candidate_info['version'])
-        info.append("大小：" + self.candidate_info['size'])
-        info.append("MD5值：" + self.candidate_info['md5'])
-        info.append("下载地址：" + self.candidate_info['uri'])
-        origins = self.installed_info['origins']
-        if(len(origins) > 1):
-            info.append("注意有" + str(len(origins)) +"个源可以选择：")
-        for origin in origins:
+        try:
+            info = []
+            info.append("软件名(id)：%s(%d)" % (self.name, self.id))
+            info.append("软件包名：" + self.fullname)
+            info.append("版本：" + self.installed_info['version'])
+            info.append("大小：" + str(self.installed_info['size']))
+            info.append("MD5值：" + self.installed_info['md5'])
+            info.append("下载地址：" + str(self.installed_info['uri']))
+            origins = self.installed_info['origins']
+            origin = origins[0]
             info.append("源信息：(%s-%s)" % (origin['label'], origin['origin']))
+            info.append("----------新软件包信息----------")
+            info.append("版本：" + self.candidate_info['version'])
+            info.append("大小：" + str(self.candidate_info['size']))
+            info.append("MD5值：" + self.candidate_info['md5'])
+            #info.append("下载地址：" + str(self.candidate_info['uris']))
+            origins = self.candidate_info['origins']
+            uris = self.candidate_info['uris']
+            if(len(origins) > 1):
+                info.append("注意有" + str(len(origins)) +"个源可以选择：")
+            #for origin uri in itertools.izip(origins, uris):
+            for origin in origins:
+                info.append("源信息：(%s-%s)" % (origin['label'], origin['origin']))
+                #info.append("下载地址：" + str(uri))
+            for uri in uris:
+                info.append("下载地址：" + str(uri))
 
-        infos=''
-        for str in info:
-            infos = infos + str + "\n"
-        return infos
+            infos=''
+            for tmp in info:
+                infos = infos + tmp + "\n"
+            return infos
+        except Exception, detail:
+            return detail
 
 #pkginfodict={}
 def checkAPT(use_synaptic, window_id):
