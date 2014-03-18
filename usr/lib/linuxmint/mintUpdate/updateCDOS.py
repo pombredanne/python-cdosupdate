@@ -255,7 +255,7 @@ def update_cdos(widget, treeView, statusIcon, wTree):
     iter = model.get_iter_first()
     num_selected = 0
     while (iter != None):
-        name = model.get_value(iter, model_name)
+        name = model.get_value(iter, g.model_name)
         #print g.pkginfodict[name].origin
         if(g.pkginfodict[name].label == "CDOS"):
             model.set_value(iter, 0, "true")

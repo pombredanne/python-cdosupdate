@@ -23,7 +23,7 @@ def add_to_ignore_list(widget, treeview_update, pkg, statusIcon, wTree):
     t = threading.Thread(target=refresh_status, args=(treeview_update, statusIcon, wTree, [pkg]))
     t.start()
 
-def show_pkg_info(widget, statusIcon, wTree):
+def show_pkg_info(widget, selected_package, statusIcon, wTree):
     return False
 
 def menuPopup(widget, event, treeview_update, statusIcon, wTree):
@@ -633,10 +633,10 @@ def pref_apply(widget, prefs_tree, treeview, statusIcon, wTree):
     config.write()
 
     prefs_tree.get_widget("window2").hide()
-    t = threading.Thread(target=refresh_status, args=(treeview_update, statusIcon, wTree, []))
-    t.start()
-    #refresh = RefreshThread(treeview, statusIcon, wTree)
-    #refresh.start()
+    #t = threading.Thread(target=refresh_status, args=(treeview_update, statusIcon, wTree, []))
+    #t.start()
+    refresh = RefreshThread(treeview, statusIcon, wTree)
+    refresh.start()
 
 def info_cancel(widget, prefs_tree):
     prefs_tree.get_widget("window3").hide()
