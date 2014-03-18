@@ -382,3 +382,6 @@ msgstr "错误"
 
 msgid "WARNING"
 msgstr "警告"
+
+msgid "Show package info"
+msgstr "显示包信息"

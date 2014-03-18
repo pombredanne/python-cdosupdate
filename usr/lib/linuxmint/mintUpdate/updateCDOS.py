@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 import gtk
-import tempfile
 import subprocess
 import time
 import threading
@@ -9,7 +8,7 @@ import gobject
 import os
 import commands
 import itertools
-from globalParameter import *
+import globalParameter as g
 gtk.gdk.threads_init()
 
 class ChooseVBox(gtk.VBox):
@@ -235,13 +234,13 @@ def test():
             for descs,cmd in itertools.izip(descs, cmds):
                 model_data.append(('true', descs, cmd))
     else:
-        error_dialog(_("Command fail: cdos-upgrade --check"))
+        g.ERROR_DIALOG(_("Command fail: cdos-upgrade --check"))
     model_data = []
     if(len(model_data) > 0):
         main = MainWindow()
         main.openWindow()
     else:
-        warning_dialog(_("All customization has achieved."))
+        g.WARNING_DIALOG(_("All customization has achieved."))
 
 def update_cdos(widget, treeView, statusIcon, wTree):
     global model_data
@@ -249,7 +248,7 @@ def update_cdos(widget, treeView, statusIcon, wTree):
 
     cmdstatus, cmdoutput = commands.getstatusoutput('apt-get install cdos-upgrade')
     if(cmdstatus != 0):
-        error_dialog(_("Package cdos-upgrade is not install correct."))
+        g.ERROR_DIALOG(_("Package cdos-upgrade is not install correct."))
         return False
 
     model = treeView.get_model()
@@ -257,8 +256,8 @@ def update_cdos(widget, treeView, statusIcon, wTree):
     num_selected = 0
     while (iter != None):
         name = model.get_value(iter, model_name)
-        #print pkginfodict[name].origin
-        if(pkginfodict[name].label == "CDOS"):
+        #print g.pkginfodict[name].origin
+        if(g.pkginfodict[name].label == "CDOS"):
             model.set_value(iter, 0, "true")
             num_selected = num_selected + 1
             model_data.append(('true', 'Update Package' + name, 'apt-get -y --force-yes install ' + name))
@@ -274,18 +273,18 @@ def update_cdos(widget, treeView, statusIcon, wTree):
             for descs,cmd in itertools.izip(descs, cmds):
                 model_data.append(('true', descs, cmd))
     else:
-        error_dialog(_("Command fail: cdos-upgrade --check"))
+        g.ERROR_DIALOG(_("Command fail: cdos-upgrade --check"))
         return False
     if(len(model_data) > 0):
         main = MainWindow()
         main.openWindow()
     else:
-        warning_dialog(_("All customization has achieved."))
+        g.WARNING_DIALOG(_("All customization has achieved."))
         return False
 
 
 #    for row in model:
-#        if(pkginfodict[row[1]].origin == "cosdesktop"):
+#        if(g.pkginfodict[row[1]].origin == "cosdesktop"):
 #            row[0] = "true"
 
 #    if(num_selected > 0):
