@@ -376,3 +376,9 @@ msgstr "指令错误： cdos-upgrade --check"
 
 msgid "Contact us: cdos_support@iscas.ac.cn"
 msgstr "联系我们：cdos_support@iscas.ac.cn"
+
+msgid "ERROR"
+msgstr "错误"
+
+msgid "WARNING"
+msgstr "警告"

@@ -18,7 +18,7 @@ pkginfodict={}
 
 def error_dialog(message):
     dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK, None)
-    dialog.set_title("ERROR")
+    dialog.set_title(_("ERROR"))
     dialog.set_markup("<b>" + message + "</b>")
     label = gtk.Label(_("Contact us: cdos_support@iscas.ac.cn"))
     dialog.vbox.pack_start(label)
@@ -31,7 +31,7 @@ def error_dialog(message):
 
 def warning_dialog(message):
     dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING, gtk.BUTTONS_OK, None)
-    dialog.set_title("ERROR")
+    dialog.set_title(_("WARNING"))
     dialog.set_markup("<b>" + message + "</b>")
     dialog.set_default_size(400, 300)
     dialog.show_all()

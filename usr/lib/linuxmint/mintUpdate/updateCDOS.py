@@ -246,9 +246,12 @@ def test():
 def update_cdos(widget, treeView, statusIcon, wTree):
     global model_data
     model_data = []
+
     cmdstatus, cmdoutput = commands.getstatusoutput('apt-get install cdos-upgrade')
     if(cmdstatus != 0):
-        error_dialog(_("Package cdos-upgrade is not install correct.")
+        error_dialog(_("Package cdos-upgrade is not install correct."))
+        return False
+
     model = treeView.get_model()
     iter = model.get_iter_first()
     num_selected = 0
@@ -272,11 +275,13 @@ def update_cdos(widget, treeView, statusIcon, wTree):
                 model_data.append(('true', descs, cmd))
     else:
         error_dialog(_("Command fail: cdos-upgrade --check"))
+        return False
     if(len(model_data) > 0):
         main = MainWindow()
         main.openWindow()
     else:
         warning_dialog(_("All customization has achieved."))
+        return False
 
 
 #    for row in model:
