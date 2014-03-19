@@ -100,7 +100,6 @@ g.LOG.writelines("++ Launching mintUpdate in " + g.MODE + " g.MODE\n")
 g.LOG.flush()
 
 try:
-
     prefs = read_configuration()
 
     #Set the Glade file
@@ -127,26 +126,26 @@ try:
         window_id = repr(socket.get_id())
 
     # statusicon-setting
-    statusIcon = gtk.StatusIcon()
-    statusIcon.set_from_file(g.icon_busy)
-    statusIcon.set_tooltip(_("Checking for updates"))
-    statusIcon.set_visible(True)
+
+    g.STATUSICON.set_from_file(g.icon_busy)
+    g.STATUSICON.set_tooltip(_("Checking for updates"))
+    g.STATUSICON.set_visible(True)
     menu = gtk.Menu()
     menuItem3 = gtk.ImageMenuItem(gtk.STOCK_REFRESH)
-    menuItem3.connect('activate', force_refresh, treeview_update, statusIcon, wTree)
+    menuItem3.connect('activate', force_refresh, treeview_update, wTree)
     menu.append(menuItem3)
     menuItem2 = gtk.ImageMenuItem(gtk.STOCK_DIALOG_INFO)
     menuItem2.connect('activate', open_information)
     menu.append(menuItem2)
     if os.getuid() == 0 :
         menuItem4 = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
-        menuItem4.connect('activate', open_preferences, treeview_update, statusIcon, wTree)
+        menuItem4.connect('activate', open_preferences, treeview_update, wTree)
         menu.append(menuItem4)
     menuItem = gtk.ImageMenuItem(gtk.STOCK_QUIT)
-    menuItem.connect('activate', quit_cb, wTree.get_widget("window1"), wTree.get_widget("vpaned1"), statusIcon)
+    menuItem.connect('activate', quit_cb, wTree.get_widget("window1"), wTree.get_widget("vpaned1"))
     menu.append(menuItem)
-    statusIcon.connect('activate', activate_icon_cb, None, wTree)
-    statusIcon.connect('popup-menu', popup_menu_cb, menu)
+    g.STATUSICON.connect('activate', activate_icon_cb, None, wTree)
+    g.STATUSICON.connect('popup-menu', popup_menu_cb, menu)
 
     # treeview-setting
     cr = gtk.CellRendererToggle()
@@ -184,16 +183,16 @@ try:
     #model.set_sort_column_id( 7, gtk.SORT_ASCENDING )
     treeview_update.set_model(model)
     del model
-    treeview_update.connect( "button-release-event", menuPopup, treeview_update, statusIcon, wTree )
+    treeview_update.connect( "button-release-event", menuPopup, treeview_update, wTree )
     selection = treeview_update.get_selection()
     selection.connect("changed", display_selected_package, wTree)
 
     # toolbar-setting
     wTree.get_widget("tool_clear").connect("clicked", clear, treeview_update)
     wTree.get_widget("tool_select_all").connect("clicked", select_all, treeview_update)
-    wTree.get_widget("tool_refresh").connect("clicked", force_refresh, treeview_update, statusIcon, wTree)
-    wTree.get_widget("tool_apply").connect("clicked", install, treeview_update, statusIcon, wTree)
-    wTree.get_widget("update_cdos").connect("clicked", update_cdos, treeview_update, statusIcon, wTree)
+    wTree.get_widget("tool_refresh").connect("clicked", force_refresh, treeview_update, wTree)
+    wTree.get_widget("tool_apply").connect("clicked", install, treeview_update, wTree)
+    wTree.get_widget("update_cdos").connect("clicked", update_cdos, treeview_update, wTree)
     wTree.get_widget("notebook_details").connect("switch-page", switch_page, wTree, treeview_update)
 
     # menubar-setting
@@ -210,7 +209,7 @@ try:
     editMenu.set_submenu(editSubmenu)
     prefsMenuItem = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
     prefsMenuItem.get_child().set_text(_("Preferences"))
-    prefsMenuItem.connect("activate", open_preferences, treeview_update, statusIcon, wTree)
+    prefsMenuItem.connect("activate", open_preferences, treeview_update, wTree)
     editSubmenu.append(prefsMenuItem)
     if os.path.exists("/usr/bin/software-sources") or os.path.exists("/usr/bin/software-properties-gtk") or os.path.exists("/usr/bin/software-properties-kde"):
         sourcesMenuItem = gtk.ImageMenuItem(gtk.STOCK_PREFERENCES)
@@ -337,10 +336,10 @@ try:
 
     wTree.get_widget("notebook_details").set_current_page(0)
 
-    refresh = RefreshThread(treeview_update, statusIcon, wTree)
+    refresh = RefreshThread(treeview_update, wTree)
     refresh.start()
 
-    auto_refresh = AutomaticRefreshThread(treeview_update, statusIcon, wTree)
+    auto_refresh = AutomaticRefreshThread(treeview_update, wTree)
     auto_refresh.start()
     gtk.main()
 

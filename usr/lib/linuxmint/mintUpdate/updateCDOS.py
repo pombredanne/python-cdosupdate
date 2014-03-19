@@ -9,6 +9,7 @@ import os
 import commands
 import itertools
 import globalParameter as g
+from updateCallbacks import *
 gtk.gdk.threads_init()
 
 class ChooseVBox(gtk.VBox):
@@ -134,9 +135,8 @@ class ProcessVBox(gtk.VBox):
             self.textview.scroll_to_mark(end_mark, 0.0)
             gtk.gdk.threads_leave()
         self.hbuttonbox.set_sensitive(True)
-
+#not in use
     def btn_accept_clicked(self, button):
-        #print button.get_label()
         t = threading.Thread(target=self.refresh_textbuf)
         t.start()     
     def btn_close_clicked(self, button):
@@ -242,7 +242,7 @@ def test():
     else:
         g.WARNING_DIALOG(_("All customization has achieved."))
 
-def update_cdos(widget, treeView, statusIcon, wTree):
+def update_cdos(widget, treeView, wTree):
     global model_data
     model_data = []
 

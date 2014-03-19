@@ -120,10 +120,9 @@ def read_configuration():
     return prefs
 
 class RefreshThread(threading.Thread):
-    def __init__(self, treeview_update, statusIcon, wTree):
+    def __init__(self, treeview_update, wTree):
         threading.Thread.__init__(self)
         self.treeview_update = treeview_update
-        self.statusIcon = statusIcon
         self.wTree = wTree
 
     def run(self):
@@ -144,10 +143,10 @@ class RefreshThread(threading.Thread):
             self.wTree.get_widget("label_error_detail").hide()
             self.wTree.get_widget("image_error").hide()
             # Starts the blinking
-            self.statusIcon.set_from_file(g.icon_busy)
-            self.statusIcon.set_tooltip(_("Checking for updates"))
+            g.STATUSICON.set_from_file(g.icon_busy)
+            g.STATUSICON.set_tooltip(_("Checking for updates"))
             self.wTree.get_widget("vpaned1").set_position(vpaned_position)
-            #self.statusIcon.set_blinking(True)
+            #g.STATUSICON.set_blinking(True)
             gtk.gdk.threads_leave()
 
             model = gtk.TreeStore(str, str, gtk.gdk.Pixbuf, str, str, int, str, str, object, str, str) # (check, packageName, level, oldVersion, newVersion, size, stringSize, stringLevel, description, warning, extrainfo)
@@ -166,12 +165,12 @@ class RefreshThread(threading.Thread):
                     break
             if (running == True):
                 gtk.gdk.threads_enter()
-                self.statusIcon.set_from_file(g.icon_unknown)
-                self.statusIcon.set_tooltip(_("Another application is using APT"))
+                g.STATUSICON.set_from_file(g.icon_unknown)
+                g.STATUSICON.set_tooltip(_("Another application is using APT"))
                 g.STATUSBAR.push(g.CONTEXT_ID, _("Another application is using APT"))
                 g.LOG.writelines("-- Another application is using APT\n")
                 g.LOG.flush()
-                #self.statusIcon.set_blinking(False)
+                #g.STATUSICON.set_blinking(False)
                 self.wTree.get_widget("window1").window.set_cursor(None)
                 self.wTree.get_widget("window1").set_sensitive(True)
                 gtk.gdk.threads_leave()
@@ -194,8 +193,8 @@ class RefreshThread(threading.Thread):
             if ("ERROR" in pkgsname):
                 error_msg = commands.getoutput("/usr/lib/linuxmint/mintUpdate/checkAPT.py")
                 gtk.gdk.threads_enter()
-                self.statusIcon.set_from_file(g.icon_error)
-                self.statusIcon.set_tooltip(_("Could not refresh the list of packages"))
+                g.STATUSICON.set_from_file(g.icon_error)
+                g.STATUSICON.set_tooltip(_("Could not refresh the list of packages"))
                 g.STATUSBAR.push(g.CONTEXT_ID, _("Could not refresh the list of packages"))
                 g.LOG.writelines("-- Error in checkAPT.py, could not refresh the list of packages\n")
                 g.LOG.flush()
@@ -205,7 +204,7 @@ class RefreshThread(threading.Thread):
                 self.wTree.get_widget("scrolledwindow1").show()
                 self.wTree.get_widget("image_error").show()
                 self.wTree.get_widget("hbox_error").show()
-                #self.statusIcon.set_blinking(False)
+                #g.STATUSICON.set_blinking(False)
                 self.wTree.get_widget("window1").window.set_cursor(None)
                 self.wTree.get_widget("window1").set_sensitive(True)
                 #g.STATUSBAR.push(g.CONTEXT_ID, _(""))
@@ -224,8 +223,8 @@ class RefreshThread(threading.Thread):
             num_ignored = 0
 
             if (len(pkgsname) == None):
-                self.statusIcon.set_from_file(g.icon_up2date)
-                self.statusIcon.set_tooltip(_("Your system is up to date"))
+                g.STATUSICON.set_from_file(g.icon_up2date)
+                g.STATUSICON.set_tooltip(_("Your system is up to date"))
                 g.STATUSBAR.push(g.CONTEXT_ID, _("Your system is up to date"))
                 g.LOG.writelines("++ System is up to date\n")
                 g.LOG.flush()
@@ -348,8 +347,8 @@ class RefreshThread(threading.Thread):
                 gtk.gdk.threads_enter()  
                 if (new_mintupdate):
                     self.statusString = _("A new version of the update manager is available")
-                    self.statusIcon.set_from_file(g.icon_updates)
-                    self.statusIcon.set_tooltip(self.statusString)
+                    g.STATUSICON.set_from_file(g.icon_updates)
+                    g.STATUSICON.set_tooltip(self.statusString)
                     g.STATUSBAR.push(g.CONTEXT_ID, self.statusString)
                     g.LOG.writelines("++ Found a new version of mintupdate\n")
                     g.LOG.flush()
@@ -369,14 +368,14 @@ class RefreshThread(threading.Thread):
                                 self.statusString = _("%(recommended)d recommended updates available (%(size)s), 1 ignored") % {'recommended':num_safe, 'size':size_to_string(download_size)}
                             elif (num_ignored > 0):
                                 self.statusString = _("%(recommended)d recommended updates available (%(size)s), %(ignored)d ignored") % {'recommended':num_safe, 'size':size_to_string(download_size), 'ignored':num_ignored}
-                        self.statusIcon.set_from_file(g.icon_updates)
-                        self.statusIcon.set_tooltip(self.statusString)
+                        g.STATUSICON.set_from_file(g.icon_updates)
+                        g.STATUSICON.set_tooltip(self.statusString)
                         g.STATUSBAR.push(g.CONTEXT_ID, self.statusString)
                         g.LOG.writelines("++ Found " + str(num_safe) + " recommended software updates\n")
                         g.LOG.flush()
                     else:
-                        self.statusIcon.set_from_file(g.icon_up2date)
-                        self.statusIcon.set_tooltip(_("Your system is up to date"))
+                        g.STATUSICON.set_from_file(g.icon_up2date)
+                        g.STATUSICON.set_tooltip(_("Your system is up to date"))
                         g.STATUSBAR.push(g.CONTEXT_ID, _("Your system is up to date"))
                         g.LOG.writelines("++ System is up to date\n")
                         g.LOG.flush()
@@ -384,7 +383,7 @@ class RefreshThread(threading.Thread):
             g.LOG.writelines("++ Refresh finished\n")
             g.LOG.flush()
             # Stop the blinking
-            #self.statusIcon.set_blinking(False)
+            #g.STATUSICON.set_blinking(False)
             self.wTree.get_widget("notebook_details").set_current_page(0)
             self.wTree.get_widget("window1").window.set_cursor(None)
             self.treeview_update.set_model(model)
@@ -398,9 +397,9 @@ class RefreshThread(threading.Thread):
             g.LOG.writelines("-- Exception occured in the refresh thread: " + str(detail) + "\n")
             g.LOG.flush()
             gtk.gdk.threads_enter()
-            self.statusIcon.set_from_file(g.icon_error)
-            self.statusIcon.set_tooltip(_("Could not refresh the list of packages"))
-            #self.statusIcon.set_blinking(False)
+            g.STATUSICON.set_from_file(g.icon_error)
+            g.STATUSICON.set_tooltip(_("Could not refresh the list of packages"))
+            #g.STATUSICON.set_blinking(False)
             self.wTree.get_widget("window1").window.set_cursor(None)
             self.wTree.get_widget("window1").set_sensitive(True)
             g.STATUSBAR.push(g.CONTEXT_ID, _("Could not refresh the list of packages"))
@@ -430,10 +429,9 @@ class RefreshThread(threading.Thread):
 
 class InstallThread(threading.Thread):
 
-    def __init__(self, treeView, statusIcon, wTree):
+    def __init__(self, treeView, wTree):
         threading.Thread.__init__(self)
         self.treeView = treeView
-        self.statusIcon = statusIcon
         self.wTree = wTree
 
     def run(self):
@@ -561,8 +559,8 @@ class InstallThread(threading.Thread):
                                                                        
                 if proceed:
                     gtk.gdk.threads_enter()
-                    self.statusIcon.set_from_file(g.icon_apply)
-                    self.statusIcon.set_tooltip(_("Installing updates"))
+                    g.STATUSICON.set_from_file(g.icon_apply)
+                    g.STATUSICON.set_tooltip(_("Installing updates"))
                     gtk.gdk.threads_leave()
                     
                     g.LOG.writelines("++ Ready to launch synaptic\n")
@@ -612,16 +610,16 @@ class InstallThread(threading.Thread):
 
                     else:
                         if(returnCode == 0):
-                            self.refresh_status(self.treeView, self.statusIcon, self.wTree, packages)
+                            self.refresh_status(self.treeView, self.wTree, packages)
                         else:
                             # Refresh
                             gtk.gdk.threads_enter()
-                            self.statusIcon.set_from_file(g.icon_busy)
-                            self.statusIcon.set_tooltip(_("Checking for updates"))
+                            g.STATUSICON.set_from_file(g.icon_busy)
+                            g.STATUSICON.set_tooltip(_("Checking for updates"))
                             self.wTree.get_widget("window1").window.set_cursor(None)
                             self.wTree.get_widget("window1").set_sensitive(True)
                             gtk.gdk.threads_leave()
-                            refresh = RefreshThread(self.treeView, self.statusIcon, self.wTree)
+                            refresh = RefreshThread(self.treeView, self.wTree)
                             refresh.start()
                 else:
                     # Stop the blinking but don't refresh
@@ -640,16 +638,16 @@ class InstallThread(threading.Thread):
             g.LOG.writelines("-- Exception occured in the install thread: " + str(detail) + "\n")
             g.LOG.flush()
             gtk.gdk.threads_enter()
-            self.statusIcon.set_from_file(g.icon_error)
-            self.statusIcon.set_tooltip(_("Could not install the security updates"))
+            g.STATUSICON.set_from_file(g.icon_error)
+            g.STATUSICON.set_tooltip(_("Could not install the security updates"))
             g.LOG.writelines("-- Could not install security updates\n")
             g.LOG.flush()
-            #self.statusIcon.set_blinking(False)
+            #g.STATUSICON.set_blinking(False)
             self.wTree.get_widget("window1").window.set_cursor(None)
             self.wTree.get_widget("window1").set_sensitive(True)
             gtk.gdk.threads_leave()
 
-    def refresh_status(self, treeview_update, statusIcon, wTree, pkgs2rm):
+    def refresh_status(self, treeview_update, wTree, pkgs2rm):
         gtk.gdk.threads_enter()
         vpaned_position = wTree.get_widget("vpaned1").get_position()
         gtk.gdk.threads_leave()
@@ -704,8 +702,8 @@ class InstallThread(threading.Thread):
                 elif (num_ignored > 0):
                     statusString = _("%(recommended)d recommended updates available (%(size)s), %(ignored)d ignored") % {'recommended':num_safe, 'size':size_to_string(download_size), 'ignored':num_ignored}
         gtk.gdk.threads_enter()
-        statusIcon.set_from_file(g.icon_updates)
-        statusIcon.set_tooltip(statusString)
+        g.STATUSICON.set_from_file(g.icon_updates)
+        g.STATUSICON.set_tooltip(statusString)
         g.STATUSBAR.push(g.CONTEXT_ID, statusString)
         wTree.get_widget("notebook_details").set_current_page(0)
         wTree.get_widget("window1").window.set_cursor(None)
@@ -768,10 +766,9 @@ class ChangelogRetriever(threading.Thread):
         gtk.gdk.threads_leave()
 
 class AutomaticRefreshThread(threading.Thread):
-    def __init__(self, treeView, statusIcon, wTree):
+    def __init__(self, treeView, wTree):
         threading.Thread.__init__(self)
         self.treeView = treeView
-        self.statusIcon = statusIcon
         self.wTree = wTree
 
     def run(self):
@@ -797,7 +794,7 @@ class AutomaticRefreshThread(threading.Thread):
                         except:
                             pass # cause it might be closed already
                         # Refresh
-                        refresh = RefreshThread(self.treeView, self.statusIcon, self.wTree)
+                        refresh = RefreshThread(self.treeView, self.wTree)
                         refresh.start()
                     else:
                         try:

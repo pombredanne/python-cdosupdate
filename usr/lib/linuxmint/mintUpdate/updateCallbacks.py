@@ -18,13 +18,13 @@ from updateClasses import ChangelogRetriever
 gtk.gdk.threads_init()
 
 
-def add_to_ignore_list(widget, treeview_update, pkg, statusIcon, wTree):
+def add_to_ignore_list(widget, treeview_update, pkg, wTree):
     os.system("echo \"%s\" >> /etc/linuxmint/mintupdate.ignored" % pkg)
-    #force_refresh(widget, treeview_update, statusIcon, wTree)
-    t = threading.Thread(target=refresh_status, args=(treeview_update, statusIcon, wTree, [pkg]))
+    #force_refresh(widget, treeview_update, wTree)
+    t = threading.Thread(target=refresh_status, args=(treeview_update, wTree, [pkg]))
     t.start()
 
-def show_pkg_info_window(text):
+def show_pkg_info(widget, selected_package):
     window = gtk.Window(gtk.WINDOW_TOPLEVEL)
     #window.set_decorated(True)
     #window.set_parent(g.MAINWINDOW)
@@ -39,7 +39,7 @@ def show_pkg_info_window(text):
     textview = gtk.TextView()
     textbuf = gtk.TextBuffer()
     textview.set_buffer(textbuf)
-    textbuf.insert_at_cursor(text)
+    textbuf.insert_at_cursor(g.pkginfodict[selected_package].printInfo())
     end_mark = textbuf.get_insert()
     textview.scroll_to_mark(end_mark, 0.0)
     scrolledWindow = gtk.ScrolledWindow()
@@ -60,21 +60,21 @@ def show_pkg_info_window(text):
     window.show_all()
     gtk.main()
 
-def show_pkg_info(widget, selected_package, statusIcon, wTree):
-    #print g.pkginfodict[selected_package].printInfo()
-    show_pkg_info_window(g.pkginfodict[selected_package].printInfo())
-    return False
+#def show_pkg_info(widget, selected_package, wTree):
+#    #print g.pkginfodict[selected_package].printInfo()
+#    show_pkg_info_window(g.pkginfodict[selected_package].printInfo())
+#    return False
 
-def menuPopup(widget, event, treeview_update, statusIcon, wTree):
+def menuPopup(widget, event, treeview_update, wTree):
     if event.button == 3:
         (model, iter) = widget.get_selection().get_selected()
         if (iter != None):
             selected_package = model.get_value(iter, g.model_name)
             menu = gtk.Menu()
             ignorePkg = gtk.MenuItem(_("Ignore updates for this package"))
-            ignorePkg.connect("activate", add_to_ignore_list, treeview_update, selected_package, statusIcon, wTree)
+            ignorePkg.connect("activate", add_to_ignore_list, treeview_update, selected_package, wTree)
             showInfo = gtk.MenuItem(_("Show package info"))
-            showInfo.connect("activate", show_pkg_info, selected_package, statusIcon, wTree)
+            showInfo.connect("activate", show_pkg_info, selected_package)
             menu.append(ignorePkg)
             menu.append(showInfo)        
             menu.show_all()        
@@ -186,8 +186,8 @@ def read_configuration():
     return prefs
 
 # statusicon-setting
-def force_refresh(widget, treeview, statusIcon, wTree):
-    refresh = RefreshThread(treeview, statusIcon, wTree)
+def force_refresh(widget, treeview, wTree):
+    refresh = RefreshThread(treeview, wTree)
     refresh.start()
 def open_information(widget):
     gladefile = "/usr/lib/linuxmint/mintUpdate/mintUpdate.glade"
@@ -208,7 +208,7 @@ def open_information(widget):
     txtbuffer.set_text(commands.getoutput("cat " + g.LOGFILE))
     prefs_tree.get_widget("log_textview").set_buffer(txtbuffer)
 
-def open_preferences(widget, treeview, statusIcon, wTree):
+def open_preferences(widget, treeview, wTree):
 
     gladefile = "/usr/lib/linuxmint/mintUpdate/mintUpdate.glade"
     prefs_tree = gtk.glade.XML(gladefile, "window2")
@@ -255,14 +255,14 @@ def open_preferences(widget, treeview, statusIcon, wTree):
     prefs_tree.get_widget("window2").set_icon_from_file("/usr/lib/linuxmint/mintUpdate/icons/base.svg")
     prefs_tree.get_widget("window2").show()
     prefs_tree.get_widget("pref_button_cancel").connect("clicked", pref_cancel, prefs_tree)
-    prefs_tree.get_widget("pref_button_apply").connect("clicked", pref_apply, prefs_tree, treeview, statusIcon, wTree)
+    prefs_tree.get_widget("pref_button_apply").connect("clicked", pref_apply, prefs_tree, treeview, wTree)
 
-    prefs_tree.get_widget("button_icon_busy").connect("clicked", change_icon, "busy", prefs_tree, treeview, statusIcon, wTree)
-    prefs_tree.get_widget("button_icon_up2date").connect("clicked", change_icon, "up2date", prefs_tree, treeview, statusIcon, wTree)
-    prefs_tree.get_widget("button_icon_updates").connect("clicked", change_icon, "updates", prefs_tree, treeview, statusIcon, wTree)
-    prefs_tree.get_widget("button_icon_error").connect("clicked", change_icon, "error", prefs_tree, treeview, statusIcon, wTree)
-    prefs_tree.get_widget("button_icon_unknown").connect("clicked", change_icon, "unknown", prefs_tree, treeview, statusIcon, wTree)
-    prefs_tree.get_widget("button_icon_apply").connect("clicked", change_icon, "apply", prefs_tree, treeview, statusIcon, wTree)
+    prefs_tree.get_widget("button_icon_busy").connect("clicked", change_icon, "busy", prefs_tree, treeview, wTree)
+    prefs_tree.get_widget("button_icon_up2date").connect("clicked", change_icon, "up2date", prefs_tree, treeview, wTree)
+    prefs_tree.get_widget("button_icon_updates").connect("clicked", change_icon, "updates", prefs_tree, treeview, wTree)
+    prefs_tree.get_widget("button_icon_error").connect("clicked", change_icon, "error", prefs_tree, treeview, wTree)
+    prefs_tree.get_widget("button_icon_unknown").connect("clicked", change_icon, "unknown", prefs_tree, treeview, wTree)
+    prefs_tree.get_widget("button_icon_apply").connect("clicked", change_icon, "apply", prefs_tree, treeview, wTree)
 
     prefs = read_configuration()
 
@@ -381,8 +381,8 @@ def select_all(widget, treeView):
     else:
         g.STATUSBAR.push(g.CONTEXT_ID, _("%(selected)d updates selected (%(size)s)") % {'selected':num_selected, 'size':size_to_string(download_size)})
 
-def install(widget, treeView, statusIcon, wTree):
-    install = InstallThread(treeView, statusIcon, wTree)
+def install(widget, treeView, wTree):
+    install = InstallThread(treeView, wTree)
     install.start()
 
 # notebook-setting
@@ -517,7 +517,7 @@ def open_about(widget):
     dlg.connect("response", close)
     dlg.show()
 
-def refresh_status(treeview_update, statusIcon, wTree, pkgs2rm):
+def refresh_status(treeview_update, wTree, pkgs2rm):
     gtk.gdk.threads_enter()
     vpaned_position = wTree.get_widget("vpaned1").get_position()
     gtk.gdk.threads_leave()
@@ -529,11 +529,9 @@ def refresh_status(treeview_update, statusIcon, wTree, pkgs2rm):
             model.remove(iter)
             #del g.pkginfodict[name]
         iter = model.iter_next(iter)
-
     num_ignored = 0
     num_safe = 0
     download_size = 0
-
     prefs = read_configuration()
     ignored_list = []
     if os.path.exists("/etc/linuxmint/mintupdate.ignored"):
@@ -572,8 +570,8 @@ def refresh_status(treeview_update, statusIcon, wTree, pkgs2rm):
             elif (num_ignored > 0):
                 statusString = _("%(recommended)d recommended updates available (%(size)s), %(ignored)d ignored") % {'recommended':num_safe, 'size':size_to_string(download_size), 'ignored':num_ignored}
     gtk.gdk.threads_enter()
-    statusIcon.set_from_file(g.icon_updates)
-    statusIcon.set_tooltip(statusString)
+    g.STATUSICON.set_from_file(g.icon_updates)
+    g.STATUSICON.set_tooltip(statusString)
     g.STATUSBAR.push(g.CONTEXT_ID, statusString)
     wTree.get_widget("notebook_details").set_current_page(0)
     wTree.get_widget("window1").window.set_cursor(None)
@@ -582,7 +580,7 @@ def refresh_status(treeview_update, statusIcon, wTree, pkgs2rm):
     gtk.gdk.threads_leave()
 
 # other-setting
-def change_icon(widget, button, prefs_tree, treeview, statusIcon, wTree):
+def change_icon(widget, button, prefs_tree, treeview, wTree):
     dialog = gtk.FileChooserDialog(_("Update Manager"), None, gtk.FILE_CHOOSER_ACTION_OPEN, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
     filter1 = gtk.FileFilter()
     filter1.set_name("*.*")
@@ -615,7 +613,7 @@ def change_icon(widget, button, prefs_tree, treeview, statusIcon, wTree):
             g.icon_apply = filename
     dialog.destroy()
 
-def pref_apply(widget, prefs_tree, treeview, statusIcon, wTree):
+def pref_apply(widget, prefs_tree, treeview, wTree):
 
     if (not os.path.exists("/etc/linuxmint")):
         os.system("mkdir -p /etc/linuxmint")
@@ -672,9 +670,9 @@ def pref_apply(widget, prefs_tree, treeview, statusIcon, wTree):
     config.write()
 
     prefs_tree.get_widget("window2").hide()
-    #t = threading.Thread(target=refresh_status, args=(treeview_update, statusIcon, wTree, []))
+    #t = threading.Thread(target=refresh_status, args=(treeview_update, wTree, []))
     #t.start()
-    refresh = RefreshThread(treeview, statusIcon, wTree)
+    refresh = RefreshThread(treeview, wTree)
     refresh.start()
 
 def info_cancel(widget, prefs_tree):

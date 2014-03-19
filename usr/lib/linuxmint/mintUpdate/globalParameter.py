@@ -40,7 +40,8 @@ MODE = ''
 PID = 0
 MAINWINDOW = gtk.Window()
 STATUSBAR = gtk.Statusbar()
-CONTEXT_ID = 5
+STATUSICON = gtk.StatusIcon()
+CONTEXT_ID = 0
 
 def ERROR_DIALOG(message):
     dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK, None)
