@@ -135,18 +135,18 @@ class ProcessVBox(gtk.VBox):
             self.textview.scroll_to_mark(end_mark, 0.0)
             gtk.gdk.threads_leave()
         self.hbuttonbox.set_sensitive(True)
-        if(pkgnumbers > 0):
-            global treeView_update
-            global wTree_update
-            refresh = RefreshThread(treeView_update, wTree_update)
-            refresh.start()
 #not in use
     def btn_accept_clicked(self, button):
         t = threading.Thread(target=self.refresh_textbuf)
         t.start()     
     def btn_close_clicked(self, button):
-        #print button.get_label()
         self.main.window.hide()
+        global pkgnumbers
+        if(pkgnumbers > 0):
+            global treeView_update
+            global wTree_update
+            refresh = RefreshThread(treeView_update, wTree_update)
+            refresh.start()
         #pid = os.getpid()    
         #os.system("kill -9 %s &" % pid)
     def pack(self):
