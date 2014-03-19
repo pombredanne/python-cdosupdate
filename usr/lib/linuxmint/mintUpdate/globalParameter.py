@@ -38,7 +38,7 @@ LOGFILE = ''
 APP_HIDDEN = True
 MODE = ''
 PID = 0
-
+MAINWINDOW = gtk.Window()
 STATUSBAR = gtk.Statusbar()
 CONTEXT_ID = 5
 

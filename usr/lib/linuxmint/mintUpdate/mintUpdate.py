@@ -4,7 +4,6 @@ try:
     import os
     import commands
     import sys
-    import string
     import gtk
     import gtk.glade
     import tempfile
@@ -107,7 +106,8 @@ try:
     #Set the Glade file
     gladefile = "/usr/lib/linuxmint/mintUpdate/mintUpdate.glade"
     wTree = gtk.glade.XML(gladefile, "window1")
-    wTree.get_widget("window1").set_title(_("Update Manager"))
+    g.MAINWINDOW = wTree.get_widget("window1")
+    g.MAINWINDOW.set_title(_("Update Manager"))
     wTree.get_widget("window1").set_default_size(prefs['dimensions_x'], prefs['dimensions_y'])
     wTree.get_widget("vpaned1").set_position(prefs['dimensions_pane_position'])
     

@@ -6,6 +6,7 @@ import threading
 import os
 import commands
 import fnmatch
+import tempfile
 from configobj import ConfigObj
 from subprocess import Popen, PIPE
 import globalParameter as g
@@ -611,7 +612,7 @@ class InstallThread(threading.Thread):
 
                     else:
                         if(returnCode == 0):
-                            refresh_status(self.treeView, self.statusIcon, self.wTree, packages)
+                            self.refresh_status(self.treeView, self.statusIcon, self.wTree, packages)
                         else:
                             # Refresh
                             gtk.gdk.threads_enter()
@@ -647,6 +648,70 @@ class InstallThread(threading.Thread):
             self.wTree.get_widget("window1").window.set_cursor(None)
             self.wTree.get_widget("window1").set_sensitive(True)
             gtk.gdk.threads_leave()
+
+    def refresh_status(self, treeview_update, statusIcon, wTree, pkgs2rm):
+        gtk.gdk.threads_enter()
+        vpaned_position = wTree.get_widget("vpaned1").get_position()
+        gtk.gdk.threads_leave()
+        model = treeview_update.get_model()
+        iter = model.get_iter_first()
+        while (iter != None):
+            name = model.get_value(iter, g.model_name)
+            if name in pkgs2rm:
+                model.remove(iter)
+                #del g.pkginfodict[name]
+            iter = model.iter_next(iter)
+
+        num_ignored = 0
+        num_safe = 0
+        download_size = 0
+
+        prefs = read_configuration()
+        ignored_list = []
+        if os.path.exists("/etc/linuxmint/mintupdate.ignored"):
+            blacklist_file = open("/etc/linuxmint/mintupdate.ignored", "r")
+            for blacklist_line in blacklist_file:
+                ignored_list.append(blacklist_line.strip())
+            blacklist_file.close()
+
+        iter = model.get_iter_first()
+        while (iter != None):
+            name = model.get_value(iter, g.model_name)
+            level = model.get_value(iter, g.model_strlevel)
+            size = model.get_value(iter, g.model_size)
+            for blacklist in ignored_list:
+                if fnmatch.fnmatch(name, blacklist):
+                    num_ignored = num_ignored + 1
+                    break
+            if(prefs["level" + str(level) + "_safe"]): 
+                num_safe = num_safe + 1
+                download_size = download_size + size
+            iter = model.iter_next(iter)
+
+        if (num_safe > 0):
+            if (num_safe == 1):
+                if (num_ignored == 0):
+                    statusString = _("1 recommended update available (%(size)s)") % {'size':size_to_string(download_size)}
+                elif (num_ignored == 1):
+                    statusString = _("1 recommended update available (%(size)s), 1 ignored") % {'size':size_to_string(download_size)}
+                elif (num_ignored > 1):
+                    statusString = _("1 recommended update available (%(size)s), %(ignored)d ignored") % {'size':size_to_string(download_size), 'ignored':num_ignored}
+            else:
+                if (num_ignored == 0):
+                    statusString = _("%(recommended)d recommended updates available (%(size)s)") % {'recommended':num_safe, 'size':size_to_string(download_size)}
+                elif (num_ignored == 1):
+                    statusString = _("%(recommended)d recommended updates available (%(size)s), 1 ignored") % {'recommended':num_safe, 'size':size_to_string(download_size)}
+                elif (num_ignored > 0):
+                    statusString = _("%(recommended)d recommended updates available (%(size)s), %(ignored)d ignored") % {'recommended':num_safe, 'size':size_to_string(download_size), 'ignored':num_ignored}
+        gtk.gdk.threads_enter()
+        statusIcon.set_from_file(g.icon_updates)
+        statusIcon.set_tooltip(statusString)
+        g.STATUSBAR.push(g.CONTEXT_ID, statusString)
+        wTree.get_widget("notebook_details").set_current_page(0)
+        wTree.get_widget("window1").window.set_cursor(None)
+        wTree.get_widget("window1").set_sensitive(True)
+        wTree.get_widget("vpaned1").set_position(vpaned_position)
+        gtk.gdk.threads_leave()
 
 
 class ChangelogRetriever(threading.Thread):

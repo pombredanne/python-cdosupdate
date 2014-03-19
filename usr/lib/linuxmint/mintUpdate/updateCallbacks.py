@@ -8,6 +8,7 @@ import os
 import commands
 import itertools
 import fnmatch
+import string
 from configobj import ConfigObj
 import globalParameter as g
 from updateClasses import RefreshThread
@@ -25,16 +26,26 @@ def add_to_ignore_list(widget, treeview_update, pkg, statusIcon, wTree):
 
 def show_pkg_info_window(text):
     window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+    #window.set_decorated(True)
+    #window.set_parent(g.MAINWINDOW)
+    window.set_modal(True)
+    window.set_destroy_with_parent(True)
     window.set_title(_("Package Information"))
     window.set_icon_from_file("/usr/lib/linuxmint/mintUpdate/icons/base.svg")
-    window.set_default_size(400, 250)
+    window.set_default_size(500, 300)
     window.set_position(gtk.WIN_POS_CENTER)
     vbox = gtk.VBox()
-    label = gtk.Label(text)
+    #label = gtk.Label(text)
+    textview = gtk.TextView()
+    textbuf = gtk.TextBuffer()
+    textview.set_buffer(textbuf)
+    textbuf.insert_at_cursor(text)
+    end_mark = textbuf.get_insert()
+    textview.scroll_to_mark(end_mark, 0.0)
     scrolledWindow = gtk.ScrolledWindow()
     scrolledWindow.set_shadow_type(gtk.SHADOW_IN)
     scrolledWindow.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-#    scrolledWindow.add(label)
+    scrolledWindow.add(textview)
     hbuttonbox = gtk.HButtonBox()
     hbuttonbox.set_spacing(50)
     hbuttonbox.set_layout(gtk.BUTTONBOX_CENTER)
@@ -43,14 +54,14 @@ def show_pkg_info_window(text):
         window.hide()
     btn_ok.connect("clicked", btn_ok_clicked)
     hbuttonbox.pack_start(btn_ok)
-    vbox.pack_start(label)
+    vbox.pack_start(scrolledWindow)
     vbox.pack_start(hbuttonbox, False, False)
     window.add(vbox)
     window.show_all()
     gtk.main()
 
 def show_pkg_info(widget, selected_package, statusIcon, wTree):
-    print g.pkginfodict[selected_package].printInfo()
+    #print g.pkginfodict[selected_package].printInfo()
     show_pkg_info_window(g.pkginfodict[selected_package].printInfo())
     return False
 
@@ -375,7 +386,7 @@ def install(widget, treeView, statusIcon, wTree):
     install.start()
 
 # notebook-setting
-def switch_page(notebook, page, page_num, Wtree, treeView):
+def switch_page(notebook, page, page_num, wTree, treeView):
     selection = treeView.get_selection()
     (model, iter) = selection.get_selected()
     if (iter != None):

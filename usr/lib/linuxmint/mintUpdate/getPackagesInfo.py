@@ -65,30 +65,31 @@ class pkginfo():
     def printInfo(self):
         try:
             info = []
-            info.append("软件名(id)：%s(%d)" % (self.name, self.id))
-            info.append("软件包名：" + self.fullname)
-            info.append("版本：" + self.installed_info['version'])
-            info.append("大小：" + str(self.installed_info['size']))
-            info.append("MD5值：" + self.installed_info['md5'])
-            info.append("下载地址：" + str(self.installed_info['uri']))
+            info.append("ID：(%d)" % (self.id))
+            info.append("软件名：%s" % (self.name))
+            info.append("软件包名：%s" % self.fullname)
+            info.append("----------已安装软件包信息----------")
+            info.append("版本：%s" % self.installed_info['version'])
+            info.append("大小：%d" % self.installed_info['size'])
+            info.append("MD5值：%s" % self.installed_info['md5'])
             origins = self.installed_info['origins']
             origin = origins[0]
             info.append("源信息：(%s-%s)" % (origin['label'], origin['origin']))
+            info.append("下载地址：%s" % self.installed_info['uri'])
             info.append("----------新软件包信息----------")
-            info.append("版本：" + self.candidate_info['version'])
-            info.append("大小：" + str(self.candidate_info['size']))
-            info.append("MD5值：" + self.candidate_info['md5'])
+            info.append("版本：%s" % self.candidate_info['version'])
+            info.append("大小：%d" % self.candidate_info['size'])
+            info.append("MD5值：%s" % self.candidate_info['md5'])
             #info.append("下载地址：" + str(self.candidate_info['uris']))
             origins = self.candidate_info['origins']
             uris = self.candidate_info['uris']
             if(len(origins) > 1):
-                info.append("注意有" + str(len(origins)) +"个源可以选择：")
+                info.append("注意：有%d个源可以选择：" % len(origins))
             #for origin uri in itertools.izip(origins, uris):
             for origin in origins:
                 info.append("源信息：(%s-%s)" % (origin['label'], origin['origin']))
-                #info.append("下载地址：" + str(uri))
             for uri in uris:
-                info.append("下载地址：" + str(uri))
+                info.append("下载地址：%s" % uri)
 
             infos=''
             for tmp in info:
