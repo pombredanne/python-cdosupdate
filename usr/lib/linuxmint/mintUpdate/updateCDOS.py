@@ -9,7 +9,7 @@ import os
 import commands
 import itertools
 import globalParameter as g
-from updateCallbacks import *
+from updateClasses import RefreshThread
 gtk.gdk.threads_init()
 
 class ChooseVBox(gtk.VBox):
@@ -135,6 +135,11 @@ class ProcessVBox(gtk.VBox):
             self.textview.scroll_to_mark(end_mark, 0.0)
             gtk.gdk.threads_leave()
         self.hbuttonbox.set_sensitive(True)
+        if(pkgnumbers > 0):
+            global treeView_update
+            global wTree_update
+            refresh = RefreshThread(treeView_update, wTree_update)
+            refresh.start()
 #not in use
     def btn_accept_clicked(self, button):
         t = threading.Thread(target=self.refresh_textbuf)
@@ -220,6 +225,9 @@ class MainWindow():
 
 global model_data
 model_data = []
+global pkgnumbers
+global treeView_update
+global wTree_update
 
 def test():
     global model_data
@@ -245,7 +253,12 @@ def test():
 def update_cdos(widget, treeView, wTree):
     global model_data
     model_data = []
-
+    global pkgnumbers
+    pkgnumbers = 0
+    global treeView_update
+    global wTree_update
+    treeView_update = treeView
+    wTree_update = wTree
     cmdstatus, cmdoutput = commands.getstatusoutput('apt-get install cdos-upgrade')
     if(cmdstatus != 0):
         g.ERROR_DIALOG(_("Package cdos-upgrade is not install correct."))
@@ -253,13 +266,12 @@ def update_cdos(widget, treeView, wTree):
 
     model = treeView.get_model()
     iter = model.get_iter_first()
-    num_selected = 0
     while (iter != None):
         name = model.get_value(iter, g.model_name)
         #print g.pkginfodict[name].origin
         if(g.pkginfodict[name].label == "CDOS"):
             model.set_value(iter, 0, "true")
-            num_selected = num_selected + 1
+            pkgnumbers = pkgnumbers + 1
             model_data.append(('true', 'Update Package' + name, 'apt-get -y --force-yes install ' + name))
         else:
             model.set_value(iter, 0, "false")
