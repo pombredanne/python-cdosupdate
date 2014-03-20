@@ -211,7 +211,7 @@ class RefreshThread(threading.Thread):
                 gtk.gdk.threads_leave()
                 return False
             # Check value and Look for mintupdate
-            if ("cdosupdate" in pkgsname):               
+            if ("mintupdate" in pkgsname):               
                 new_mintupdate = True
             else:
                 new_mintupdate = False

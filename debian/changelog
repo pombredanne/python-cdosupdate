@@ -1,3 +1,9 @@
+mintupdate (2014.03.15) pony; urgency=low
+
+  * change structure for cdosupdate
+
+ -- CDOS Team <cdos_support@iscas.ac.cn>  Sat, 15 Mar 2014 13:38:00 +0000
+
 mintupdate (2014.02.25) pony; urgency=low
 
   * fixed for CDOS updates
