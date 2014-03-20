@@ -211,7 +211,7 @@ class RefreshThread(threading.Thread):
                 gtk.gdk.threads_leave()
                 return False
             # Check value and Look for mintupdate
-            if ("mintupdate" in pkgsname):               
+            if ("mintupdate" in pkgsname):
                 new_mintupdate = True
             else:
                 new_mintupdate = False
@@ -308,7 +308,7 @@ class RefreshThread(threading.Thread):
                                 model.set_value(iter, g.model_check, "true")
                                 model.row_changed(model.get_path(iter), iter)
                                 model.set_value(iter, g.model_name, pkg)
-                                model.set_value(iter, g.model_levelpixbuf, gtk.gdk.pixbuf_new_from_file("/usr/lib/linuxmint/mintUpdate/icons/level" + str(level) + ".png"))
+                                model.set_value(iter, g.model_levelpix, gtk.gdk.pixbuf_new_from_file("/usr/lib/linuxmint/mintUpdate/icons/level" + str(level) + ".png"))
                                 model.set_value(iter, g.model_oldversion, oldVersion)
                                 model.set_value(iter, g.model_newversion, newVersion)
                                 model.set_value(iter, g.model_size, size)
