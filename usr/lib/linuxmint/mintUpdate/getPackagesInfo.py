@@ -4,7 +4,7 @@ import os
 import sys
 import apt
 import itertools
-from globalParameter import *
+import globalParameter as g
 
 class pkginfo():
     def __init__(self, pid, pname, pfullname, candidate, installed):
@@ -42,14 +42,6 @@ class pkginfo():
         #pdict['source_version'] = version.source_version
         pdict['description'] = version.description
 
-        #tmp = version.origins[0]
-        #pdict['label'] = tmp.label
-        #pdict['origin'] = tmp.origin
-        #pdict['site'] = tmp.site
-        #pdict['component'] = tmp.component
-        #pdict['archive'] = tmp.archive
-        #pdict['trusted'] = tmp.trusted
-        #pdict['origins'] = []
         origins_tuple = []
         for tmp in version.origins:
             origin = {}
@@ -100,14 +92,10 @@ class pkginfo():
 
 #pkginfodict={}
 def checkAPT(use_synaptic, window_id):
-#    pkginfodict={}
+    g.pkginfodict={}
     try:
         cache = apt.Cache()        
         if os.getuid() == 0 :
-#            use_synaptic = False
-#            if (len(sys.argv) > 1):
-#                if sys.argv[1] == "--use-synaptic":
-#                    use_synaptic = True
             if use_synaptic:
                 from subprocess import Popen, PIPE
                 cmd = ["sudo", "/usr/sbin/synaptic", "--hide-main-window", "--update-at-startup", "--non-interactive", "--parent-window-id", "%s" % window_id]
@@ -142,25 +130,9 @@ def checkAPT(use_synaptic, window_id):
                 #package = pkg.name
                 newVersion = pkg.candidate.version
                 oldVersion = pkg.installed.version
-                #size = pkg.candidate.size
-                #sourcePackage = pkg.candidate.source_name
-                #description = pkg.candidate.description
-                #description = description.replace('\n\n', '\n')
-                #label = pkg.candidate.origins[0].label
-                #origin = pkg.candidate.origins[0].origin
-                #site = pkg.candidate.origins[0].site
                 if (newVersion != oldVersion):
                     info = pkginfo(pkg.id, pkg.name, pkg.fullname, pkg.candidate, pkg.installed)
-                    #info.name = package
-                    #info.newVersion = newVersion
-                    #info.oldVersion = oldVersion
-                    #info.size = size
-                    #info.sourcePackage = sourcePackage
-                    #info.description = description
-                    #info.label = label
-                    #info.origin = origin
-                    #info.site = site
-                    pkginfodict[pkg.name] = info
+                    g.pkginfodict[pkg.name] = info
                     #resultString = u"UPDATE###%s###%s###%s###%s###%s###%s" % (package, newVersion, oldVersion, size, sourcePackage, description)
                     #print resultString.encode('ascii', 'xmlcharrefreplace');
         #print pkginfodict.keys(), len(pkginfodict.keys())
@@ -169,8 +141,8 @@ def checkAPT(use_synaptic, window_id):
         print "ERROR###ERROR###ERROR###ERROR###ERROR###ERROR###ERROR"
         print detail
         #info = pkginfo()
-        pkginfodict['ERROR'] = None 
-    return pkginfodict
+        g.pkginfodict['ERROR'] = None 
+    return g.pkginfodict
 
 
 #def checkDependencies(changes, cache):
