@@ -369,7 +369,7 @@ msgid "Package cdos-upgrade is not install correct."
 msgstr "软件包cdos-upgrade没有正确安装。"
 
 msgid "All customization has achieved."
-msgstr "已实现所有定制。"
+msgstr "系统已更新至最新版本。"
 
 msgid "Command fail: cdos-upgrade --check"
 msgstr "指令错误： cdos-upgrade --check"
